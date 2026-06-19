@@ -6,6 +6,7 @@ import { PrismaModule } from './common/prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { WorkspaceModule } from './workspace/workspace.module';
 import { GitModule } from './git/git.module';
+import { RepoModule } from './repo/repo.module';
 import { AuditMiddleware } from './common/middlewares/audit.middleware';
 
 @Module({
@@ -18,6 +19,7 @@ import { AuditMiddleware } from './common/middlewares/audit.middleware';
     AuthModule,
     WorkspaceModule,
     GitModule,
+    RepoModule,
   ],
   controllers: [AppController],
   providers: [AppService],
