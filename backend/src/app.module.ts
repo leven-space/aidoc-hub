@@ -1,7 +1,12 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { PrismaModule } from './common/prisma/prisma.module';
+import { AuthModule } from './auth/auth.module';
+import { WorkspaceModule } from './workspace/workspace.module';
+import { GitModule } from './git/git.module';
+import { AuditMiddleware } from './common/middlewares/audit.middleware';
 
 @Module({
   imports: [
@@ -9,8 +14,16 @@ import { AppService } from './app.service';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    PrismaModule,
+    AuthModule,
+    WorkspaceModule,
+    GitModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(AuditMiddleware).forRoutes('*');
+  }
+}
