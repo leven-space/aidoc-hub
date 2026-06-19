@@ -1,0 +1,335 @@
+AI Doc Hub Implementation Plan（MVP 增强最终版）
+For agentic workers: REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (- [ ]) syntax for tracking.
+提交规则： 每个功能模块单元测试验收通过后，立即执行一次代码提交，全程小步迭代、版本可回溯，无一次性集中提交。
+UI 设计基准： 遵循 Ant Design 5 官方企业级设计语言，走「现代简洁、克制专业、信息优先」的中后台风格，统一设计令牌、色彩、布局、交互规范，全程无冗余装饰，突出业务内容与操作效率。
+MVP 范围说明： 核心能力闭环，认证采用手机号 + 密码注册登录，企业 SSO、高级特性等放入后续迭代 Roadmap。
+Goal: 打造面向企业非技术人员的开源 HTML 产物版本管理与协作平台，以团队工作空间为顶层资产组织单元，支持空间创建、成员邀请、全员协同编辑；采用单主干线性版本模型，配套个人 Access Token 与标准 MCP 协议接口，支持 Cursor/Open Code 等 AI 客户端拉取 / 上传；提供「只读预览 / 源码协作」双模式分享；补齐操作审计、内容安全、冲突处理、软删除回收站、基础搜索等企业级必备能力；整体 UI 采用现代简洁的企业级风格，解决企业内 HTML 资产分散、团队协同效率低、非技术人员操作门槛高、AI 工具链打通困难的痛点。
+Architecture: 前后端分离架构，工作空间为资产与权限的顶层容器，权限采用「空间角色继承 + 仓库级特例」模式；后端基于 Git 内核封装单主干线性提交服务，屏蔽分支概念，内置并发冲突检测机制；新增审计日志中间件与 HTML 内容安全防护层；前端基于 Ant Design 5 定制企业级主题，统一全局设计规范，面向非技术人员做术语通俗化处理；配套 MCP 协议服务层与 Access Token 鉴权层；存储层采用 Git 原生文件系统 + PostgreSQL 元数据；支持软删除回收站，全操作可追溯。
+Tech Stack:
+后端：NestJS (Node.js) + nodegit (libgit2 封装) + @modelcontextprotocol/sdk + DOMPurify (内容安全)
+前端：React 18 + Ant Design 5 + CSS-in-JS 主题定制 + Monaco Editor (仅用于预览 / 对比)
+数据库：PostgreSQL 19 + Prisma ORM
+认证：手机号 + 密码注册登录 + JWT + 个人 Access Token（企业 SSO 为后续迭代能力）
+安全：操作审计日志 + HTML 内容净化 + iframe 沙箱隔离 + 越权校验
+权限模型：工作空间三级角色（管理员 / 编辑者 / 查看者）+ 仓库级权限继承
+版本模型：单主干 (main) 线性提交，无多分支，恢复操作生成新提交，内置并发冲突检测
+协议：MCP 支持 SSE / HTTP 双接入方式
+部署：Docker + Docker Compose
+测试：Jest (单元) + Playwright (E2E)
+Task 1: 项目基础脚手架初始化
+Files:
+Create: package.json
+Create: backend/package.json
+Create: frontend/package.json
+Create: docker-compose.yml
+Create: .gitignore
+Test: tests/setup.spec.ts
+ Step 1: 初始化根目录配置文件
+写入项目基础元信息、工作区配置与统一脚本命令，配置 pnpm monorepo 工作区。
+ Step 2: 初始化后端 NestJS 脚手架
+执行 nest new backend 基础模板，引入 Prisma、nodegit、MCP SDK、DOMPurify、jsdom 核心依赖，配置全局管道、异常拦截器与统一响应格式。
+ Step 3: 初始化前端 React 脚手架
+基于 Vite 创建 React 项目，引入 Ant Design 5、React Router、Axios 基础依赖，配置代理与路径别名，移除默认冗余样式。
+ Step 4: 编写 Docker Compose 基础编排
+定义 PostgreSQL、后端、前端三个服务，配置端口映射与环境变量，实现一键启动开发环境。
+ Step 5: 运行基础启动测试
+执行 pnpm install && pnpm dev，验证前后端服务正常启动、数据库连接成功。
+ Step 6: 验收通过，提交初始版本代码
+执行 git add . && git commit -m "chore: init project scaffold"
+Task 2: 全局企业级 UI 主题与设计规范落地
+Files:
+Create: frontend/src/theme/index.ts
+Create: frontend/src/styles/global.css
+Create: frontend/src/layouts/MainLayout.tsx
+Create: frontend/src/components/PageContainer.tsx
+Test: frontend/test/ui-theme.spec.tsx
+ Step 1: 定制 Ant Design 5 企业级主题令牌
+基于 ConfigProvider 配置全局主题 token：主色采用 Ant Design 官方标准科技蓝 #1677ff，配套成功 / 警告 / 错误功能色统一色阶；圆角统一为 6px 中等圆角，阴影采用三级克制阴影体系；字体层级统一为 12/14/16/20/24px 五级字号，行高按比例适配；中性色采用 10 阶灰度，保证文本对比度符合 WCAG 2.1 标准。
+ Step 2: 编写全局基础样式与重置
+统一全局边距、滚动条样式、页面底色，采用浅灰底色 #f5f7fa 区分内容区与卡片；移除浏览器默认样式，统一表单、按钮、卡片的间距规范，遵循 8px 基准栅格系统。
+ Step 3: 实现标准中后台布局框架
+采用左侧固定侧边栏 + 顶部导航栏的经典企业级布局，侧边栏宽度 240px，顶部导航高度 64px；侧边栏支持折叠，折叠后宽度 80px；内容区采用 24 栅格系统，卡片与模块间距统一为 16px/24px 两档，保证呼吸感与专业感。
+ Step 4: 封装通用页面容器组件
+封装 PageContainer 通用组件，内置页面标题区、面包屑、内容区，统一所有页面的内边距、标题层级、操作区位置；操作按钮统一右对齐，主按钮唯一，次级操作采用文字按钮弱化视觉权重。
+ Step 5: UI 规范一致性校验
+校验全局色彩、字号、间距、圆角、阴影是否统一，所有组件复用主题令牌，无硬编码样式；验证布局在常见分辨率下的自适应表现。
+ Step 6: 验收通过，提交 UI 主题代码
+执行 git add . && git commit -m "feat: implement enterprise-level UI theme and base layout"
+Task 3: 单主干 Git 核心版本管理服务封装（新增并发冲突处理）
+Files:
+Create: backend/src/git/git.service.ts
+Create: backend/src/git/git.module.ts
+Create: backend/src/git/dto/commit-file.dto.ts
+Test: backend/test/git.service.spec.ts
+ Step 1: 编写 Git 服务单元测试用例
+定义仓库初始化、文件提交生成新版本、获取最新版本、获取历史版本列表、版本内容对比、恢复指定版本、并发冲突检测 7 个核心方法的测试断言，全程仅单主干操作。
+ Step 2: 运行测试验证用例失败
+执行 pnpm --filter backend test git.service，确认测试全部不通过。
+ Step 3: 实现单主干仓库初始化
+封装 nodegit 接口，按空间 + 仓库名初始化仓库，自动创建唯一 main 主干分支，不提供分支创建 / 切换能力，全程固定主干。
+ Step 4: 实现线性提交新版本能力
+封装文件写入→暂存→提交全流程，每次提交直接追加到 main 主干，自动生成递增版本号与提交记录，保存提交人、提交说明、时间戳，提交完成后自动成为最新版本。
+ Step 5: 实现并发冲突检测与处理
+提交时校验传入的基准版本号，若当前主干最新版本与基准版本不一致，拦截提交并返回冲突提示；提供「强制覆盖生成新版本」选项，操作前二次确认，全程不暴露分支、合并等技术概念。
+ Step 6: 实现版本历史与内容读取
+封装提交日志查询接口，按时间倒序返回全量历史版本；支持按版本号 / 提交 ID 读取对应版本的文件内容，不影响当前最新版本。
+ Step 7: 实现安全版本恢复能力
+封装「恢复指定版本」逻辑：读取目标版本内容，以新提交的方式覆盖到 main 主干，生成新版本记录，不修改、不删除原有历史提交，保持完整线性链路。
+ Step 8: 运行测试验证全部通过
+执行测试命令，确认单主干提交、冲突处理、历史留存、版本恢复逻辑符合预期，无分支相关能力暴露。
+ Step 9: 验收通过，提交代码
+执行 git add . && git commit -m "feat: implement single-trunk linear git service with conflict detection"
+Task 4: 工作空间与权限系统实现（手机号登录 + 审计日志 + 空间软删除）
+Files:
+Create: backend/prisma/schema.prisma
+Create: backend/src/workspace/workspace.service.ts
+Create: backend/src/workspace/workspace.controller.ts
+Create: backend/src/workspace/workspace.module.ts
+Create: backend/src/auth/auth.service.ts
+Create: backend/src/auth/auth.controller.ts
+Create: backend/src/common/guards/workspace-auth.guard.ts
+Create: backend/src/common/middlewares/audit.middleware.ts
+Test: backend/test/workspace.service.spec.ts
+ Step 1: 定义数据库核心模型 Schema
+编写 User、Workspace、WorkspaceMember、Repository、AuditLog 五张核心表结构；User 表以手机号为唯一标识；WorkspaceMember 定义用户 - 空间关联关系与角色（管理员 / 编辑者 / 查看者）；Repository 归属到 Workspace，权限默认继承空间角色；AuditLog 记录表操作人、操作类型、操作对象、IP、时间。
+ Step 2: 执行 Prisma 迁移生成数据表
+运行 prisma migrate dev --name init_core，在 PostgreSQL 中生成对应表结构，配置用户注册自动创建个人专属空间的初始化逻辑。
+ Step 3: 编写核心服务测试用例
+定义手机号注册登录、空间创建、空间列表查询、成员邀请、角色修改、移除成员、空间权限校验、操作审计记录、空间软删除 9 个核心场景的测试断言。
+ Step 4: 运行测试验证用例失败
+执行 pnpm --filter backend test workspace.service，确认测试全部不通过。
+ Step 5: 实现手机号注册登录认证
+实现手机号 + 密码注册、登录、Token 刷新接口，密码采用 bcrypt 加密，JWT 签发身份凭证；注册成功自动为用户创建个人专属空间；SSO 能力标注为后续迭代，暂不实现。
+ Step 6: 实现工作空间 CRUD 与软删除能力
+实现空间创建、编辑、列表查询、软删除接口，创建空间时自动将创建者设为管理员；删除操作为软删除，标记删除状态与删除时间，不物理删除数据。
+ Step 7: 实现成员邀请与管理能力
+支持生成邀请链接、按手机号添加成员，支持设置成员角色、修改角色、移除成员、撤销邀请；邀请链接支持设置有效期与角色权限。
+ Step 8: 实现空间权限校验守卫
+开发空间权限守卫，基于用户身份与空间角色校验操作权限；三级角色权限边界：管理员可管理空间与成员、编辑者可提交新版本、查看者仅可读。
+ Step 9: 实现全局审计日志中间件
+开发审计中间件，自动记录空间成员变更、仓库创建 / 删除、文件提交 / 版本恢复、Token 创建 / 吊销、分享生成 / 访问等关键操作，支持按用户、时间、操作类型筛选查询。
+ Step 10: 运行测试验证全部通过
+执行测试命令，确认认证、空间管理、成员邀请、权限校验、审计日志、软删除逻辑全部符合预期。
+ Step 11: 验收通过，提交代码
+执行 git add . && git commit -m "feat: implement workspace, phone auth and audit log system"
+Task 5: 个人 Access Token 体系建设
+Files:
+Modify: backend/prisma/schema.prisma
+Create: backend/src/auth/token.service.ts
+Create: backend/src/auth/token.controller.ts
+Create: backend/src/common/guards/token-auth.guard.ts
+Test: backend/test/token.service.spec.ts
+ Step 1: 扩展数据库模型，新增 AccessToken 表
+新增 AccessToken 模型，关联用户，支持绑定空间权限范围，包含 token 哈希、名称、权限范围（read/read_write）、授权空间、过期时间、最后使用时间、吊销状态字段，执行迁移生成数据表。
+ Step 2: 编写 Access Token 服务测试用例
+定义 Token 创建、列表查询、吊销、权限校验、空间范围校验、过期自动失效、调用审计记录 7 个核心场景的测试断言。
+ Step 3: 运行测试验证用例失败
+执行 pnpm --filter backend test token.service，确认测试全部不通过。
+ Step 4: 实现 Access Token CRUD 服务
+实现 Token 生成（加密存储，仅创建时返回明文）、用户维度列表查询、吊销、过期自动校验逻辑，支持自定义有效期、权限范围与授权空间。
+ Step 5: 实现 Token 鉴权守卫
+开发 Token 认证守卫，支持从 Header Authorization: Bearer <token> 中解析校验，与原有 JWT 鉴权并存，统一注入用户身份、权限范围与授权空间列表。
+ Step 6: 接入空间权限校验与审计
+Token 鉴权与空间权限守卫联动，仅可访问授权范围内的空间与仓库，只读 Token 禁止提交新版本；所有 Token 调用自动记录审计日志。
+ Step 7: 运行测试验证全部通过
+执行测试命令，确认 Token 创建、鉴权、空间权限控制、过期失效、审计记录逻辑全部符合预期。
+ Step 8: 验收通过，提交代码
+执行 git add . && git commit -m "feat: implement personal access token with workspace scope"
+Task 6: HTML 仓库管理模块（空间归属 + 内容安全 + 仓库软删除）
+Files:
+Create: backend/src/repo/repo.controller.ts
+Create: backend/src/repo/repo.service.ts
+Create: backend/src/repo/repo.module.ts
+Test: backend/test/repo.controller.spec.ts
+ Step 1: 编写仓库管理接口测试用例
+定义空间内仓库创建、软删除、最新文件获取、提交新版本、历史文件下载、HTML 内容净化、文件大小校验 7 个接口的测试断言，覆盖 JWT 与 Access Token 两种鉴权方式，适配单主干模型与空间权限。
+ Step 2: 运行测试验证用例失败
+执行 pnpm --filter backend test repo.controller，确认测试全部不通过。
+ Step 3: 实现空间维度仓库 CRUD 与软删除接口
+对接 Git 服务与数据库，仓库必须归属到指定空间，实现空间内仓库创建、列表查询、软删除接口，同步元数据与物理仓库，创建仓库自动初始化单主干。
+ Step 4: 实现 HTML 内容安全防护
+上传文件时基于 DOMPurify 做服务端 HTML 恶意脚本净化，过滤 XSS payload；配置文件类型白名单（仅 html/htm）、单文件大小限制、批量上传数量限制，拦截非法文件。
+ Step 5: 实现 HTML 提交新版本接口
+支持单文件 / 批量 HTML 文件提交，自动触发主干提交生成新版本，记录提交人与提交说明，提交完成自动成为当前最新版本，仅空间编辑者及以上角色可操作。
+ Step 6: 实现文件获取与下载接口
+默认返回主干最新版本文件内容，支持传入版本号读取指定历史版本，提供原始文件下载能力，空间查看者及以上角色可操作。
+ Step 7: 运行测试验证接口全部通过
+执行接口测试，确认所有仓库管理接口在两种鉴权方式下均符合单主干版本逻辑、空间权限规则与内容安全要求。
+ Step 8: 验收通过，提交代码
+执行 git add . && git commit -m "feat: implement repo management with content security and soft delete"
+Task 7: 版本对比与历史回溯
+Files:
+Create: backend/src/version/version.controller.ts
+Create: backend/src/version/version.service.ts
+Create: frontend/src/pages/version/VersionHistory.tsx
+Create: frontend/src/components/VersionDiff.tsx
+Test: backend/test/version.service.spec.ts
+ Step 1: 编写版本服务测试用例
+定义历史版本列表查询、两版本内容对比、恢复指定版本为最新版三个场景的测试断言，对接空间权限校验与审计记录。
+ Step 2: 运行测试验证用例失败
+执行 pnpm --filter backend test version.service，确认测试全部不通过。
+ Step 3: 实现版本历史与 Diff 接口
+封装 Git 服务能力，返回按时间倒序的线性版本列表，支持任意两个版本的行级差异对比，返回结构化差异数据。
+ Step 4: 实现版本恢复接口
+提供「恢复为最新版」接口，基于指定版本生成新提交覆盖主干，返回新版本号，保留完整历史链路，不删除任何旧版本，仅编辑者及以上角色可操作，操作自动记录审计。
+ Step 5: 运行后端测试验证全部通过
+执行后端单元测试，确认版本查询、对比、恢复能力正常且权限控制准确。
+ Step 6: 验收后端能力，提交后端代码
+执行 git add . && git commit -m "feat: implement version history and rollback backend API"
+ Step 7: 开发前端版本历史时间线页面
+采用卡片式时间线布局，按时间倒序排列版本，每个版本卡片标注提交人头像、提交说明、时间、版本号；操作按钮采用文字按钮弱化视觉，主操作「恢复此版本」采用次要按钮样式；整体留白充足，信息层级清晰，符合企业级简洁风格。
+ Step 8: 开发版本对比组件
+基于 Monaco Diff Editor 实现左右分栏差异预览，顶部提供版本选择器，采用标签页切换「预览对比」「源码对比」两种模式；预览 iframe 强制开启完整 sandbox 限制，隔离脚本执行；对比区域边框、间距统一遵循全局设计令牌，无多余装饰。
+ Step 9: UI 规范校验与交互验证
+校验页面色彩、间距、组件样式与全局主题一致；验证版本切换、对比、恢复操作的反馈动效克制自然，加载态、空状态统一使用 Ant Design 官方组件。
+ Step 10: 验收前端能力，提交前端代码
+执行 git add . && git commit -m "feat: implement version history and diff frontend page"
+Task 8: 双模式分享与协同协作模块
+Files:
+Modify: backend/prisma/schema.prisma
+Modify: backend/src/share/share.service.ts
+Modify: backend/src/share/share.controller.ts
+Create: backend/src/share/share-auth.middleware.ts
+Test: backend/test/share.service.spec.ts
+ Step 1: 扩展分享数据模型
+新增分享类型枚举（VIEW_ONLY / SOURCE_ACCESS），为分享记录增加权限类型、有效期、访问密码、绑定版本号、所属空间、访问次数字段，支持分享指定历史版本，执行数据库迁移。
+ Step 2: 编写双模式分享测试用例
+定义只读预览分享创建、源码协作分享创建、密码校验、临时权限签发、分享失效、源码分享提交新版本、空间内权限免分享、分享操作审计 8 个场景的测试断言。
+ Step 3: 运行测试验证用例失败
+执行 pnpm --filter backend test share.service，确认测试全部不通过。
+ Step 4: 实现只读预览型分享
+生成仅可访问预览页面的分享链接，可绑定指定版本或始终指向最新版；HTML 通过沙箱 iframe 渲染，禁止查看源码、下载与 API 调用，支持设置有效期与访问密码，空间编辑者及以上角色可创建。
+ Step 5: 实现源码协作型分享
+生成带临时写权限的分享链接，接收方可通过链接兑换临时 Access Token，支持通过 API/MCP 拉取源码、提交新版本到主干，权限范围与有效期可配置，提交记录标注分享来源。
+ Step 6: 实现空间内协同免分享逻辑
+空间内成员自动拥有对应角色权限，无需单独分享即可查看 / 编辑空间内仓库，权限随空间角色实时同步。
+ Step 7: 实现分享鉴权中间件与审计
+统一校验分享链接有效性、密码与过期状态，针对源码分享自动签发临时权限凭证；所有分享创建、访问、提交操作自动记录审计日志。
+ Step 8: 实现提交变更站内通知
+协作者 / 分享接收方提交新版本后，生成站内通知推送给空间管理员与仓库相关成员，记录提交来源与提交说明；个人设置支持通知开关。
+ Step 9: 运行测试验证全部通过
+执行测试命令，确认两种分享模式的权限控制、访问链路、过期失效逻辑符合预期，空间内权限继承正常。
+ Step 10: 验收通过，提交代码
+执行 git add . && git commit -m "feat: implement dual-mode share and workspace collaboration"
+Task 9: MCP 协议 API 服务实现
+Files:
+Create: backend/src/mcp/mcp.module.ts
+Create: backend/src/mcp/mcp.server.ts
+Create: backend/src/mcp/tools/workspace.tools.ts
+Create: backend/src/mcp/tools/repo.tools.ts
+Create: backend/src/mcp/tools/file.tools.ts
+Create: backend/src/mcp/mcp.controller.ts
+Test: backend/test/mcp.service.spec.ts
+ Step 1: 引入 MCP SDK，搭建服务基础框架
+安装 @modelcontextprotocol/sdk，基于 NestJS 搭建 MCP 服务，支持 SSE 与 HTTP 两种接入方式，统一接入 Access Token 鉴权与空间权限校验。
+ Step 2: 编写 MCP 工具测试用例
+定义列出用户空间、列出空间内仓库、获取仓库最新文件、读取指定版本文件、提交新版本、通过分享链接访问仓库 6 个工具的测试断言，适配单主干模型与空间权限，包含调用审计校验。
+ Step 3: 运行测试验证用例失败
+执行 pnpm --filter backend test mcp.service，确认测试全部不通过。
+ Step 4: 实现工作空间维度 MCP 工具
+实现list_workspaces、get_workspace_info工具，返回用户有权限的空间列表、空间角色、成员数量等基础信息。
+ Step 5: 实现仓库维度 MCP 工具
+实现list_repositories、get_repository_info工具，支持按空间筛选，返回用户有权限的仓库列表与最新版本号、更新时间等信息。
+ Step 6: 实现文件读写 MCP 工具
+实现read_file（默认读取最新版，支持指定版本号）、write_file（提交内容生成新版本到主干，自动记录提交信息）工具，对接单主干 Git 服务与空间权限校验。
+ Step 7: 适配分享链接的 MCP 访问
+支持通过源码分享链接兑换的临时 Token 调用 MCP 工具，仅可访问对应仓库，提交操作生成新版本到主干，权限与分享配置一致。
+ Step 8: 同步提供 RESTful API 兜底
+同步提供同能力的 HTTP API 接口，支持非 MCP 协议的 AI 客户端通过标准 HTTP 请求调用拉取与上传能力。
+ Step 9: 运行测试验证全部通过
+执行测试命令，确认所有 MCP 工具调用正常、鉴权准确、提交生成新版本符合单主干逻辑与空间权限规则，调用记录完整审计。
+ Step 10: 验收通过，提交代码
+执行 git add . && git commit -m "feat: implement MCP protocol API with workspace support"
+Task 10: 前端主界面与交互开发（团队空间 + 企业级 UI + 全功能页）
+Files:
+Create: frontend/src/pages/auth/LoginPage.tsx
+Create: frontend/src/pages/auth/RegisterPage.tsx
+Create: frontend/src/pages/workspace/WorkspaceList.tsx
+Create: frontend/src/pages/workspace/WorkspaceDetail.tsx
+Create: frontend/src/pages/workspace/MemberManage.tsx
+Create: frontend/src/pages/repo/RepoList.tsx
+Create: frontend/src/pages/repo/RepoDetail.tsx
+Create: frontend/src/pages/upload/UploadPage.tsx
+Create: frontend/src/pages/recycle/RecyclePage.tsx
+Create: frontend/src/pages/settings/TokenManage.tsx
+Create: frontend/src/pages/settings/AuditLogPage.tsx
+Create: frontend/src/components/ShareModal.tsx
+Create: frontend/src/components/GlobalSearch.tsx
+Test: frontend/e2e/workspace-flow.spec.ts
+ Step 1: 实现手机号登录注册页面
+开发标准登录注册页，表单布局简洁，手机号格式校验，密码强度提示，错误反馈清晰；对接后端接口，登录成功跳转首页，保持企业级统一风格。
+ Step 2: 登录注册模块验收，提交代码
+执行 git add . && git commit -m "feat: implement phone login and register page"
+ Step 3: 实现空间列表与全局搜索
+采用卡片网格布局展示空间，区分个人空间与团队空间；卡片采用轻量阴影 + 悬停微动效，展示空间名称、成员数量、更新时间；顶部导航栏集成全局搜索框，支持搜索空间、仓库名称，模糊匹配高亮。
+ Step 4: 空间列表模块验收，提交代码
+执行 git add . && git commit -m "feat: implement workspace list and global search"
+ Step 5: 实现空间详情与成员管理页
+顶部标签页切换「仓库列表」「成员管理」；成员管理采用标准表格组件，支持角色筛选、搜索、操作列；角色标签采用不同色的 Tag 组件区分，操作采用文字按钮，保持页面整洁专业。
+ Step 6: 实现仓库列表与详情页
+仓库列表支持卡片 / 列表两种视图切换，默认卡片模式；仓库详情页左侧文件树，右侧预览区，分区清晰；文件操作按钮统一放置在顶部操作栏，主次分明。
+ Step 7: 空间详情模块验收，提交代码
+执行 git add . && git commit -m "feat: implement workspace detail and repo list page"
+ Step 8: 实现提交新版本上传组件
+开发拖拽上传区域，采用虚线边框 + 浅灰底色的标准上传样式，支持批量文件上传，实时显示进度条；上传表单包含提交说明输入框，底部操作区右对齐，「提交新版本」为主按钮，「取消」为次按钮。
+ Step 9: 实现 HTML 沙箱预览组件
+采用带边框的容器包裹 iframe 沙箱预览，强制开启 sandbox 全限制，顶部提供版本切换、全屏预览操作；空状态、加载状态统一使用 Ant Design 官方组件，保持风格一致。
+ Step 10: 上传与预览模块验收，提交代码
+执行 git add . && git commit -m "feat: implement file upload and sandbox html preview"
+ Step 11: 实现回收站页面
+开发统一回收站页面，分「空间」「仓库」两个标签页，展示 30 天内删除的内容，支持一键恢复、永久删除操作；删除与恢复均二次确认，操作记录审计。
+ Step 12: 实现个人 Access Token 管理页
+采用表格展示 Token 列表，包含名称、权限范围、有效期、状态、创建时间；创建 Token 采用分步弹窗，引导用户配置权限与有效期，创建成功后高亮提示明文仅显示一次；吊销操作采用危险色文字按钮，二次确认。
+ Step 13: 实现审计日志页面（管理员可见）
+空间管理员可见审计日志页，支持按操作人、操作类型、时间范围筛选，表格展示操作详情，支持导出。
+ Step 14: 实现双模式分享弹窗组件
+弹窗顶部采用标签页切换「仅预览查看」「可编辑源码」两种模式，配置项清晰分组；分享链接采用带复制按钮的输入框展示，有效期、密码配置采用折叠面板收纳，保持界面简洁。
+ Step 15: 辅助功能模块验收，提交代码
+执行 git add . && git commit -m "feat: implement recycle, token, audit log and share modal"
+ Step 16: 运行 E2E 测试验证主流程与 UI 一致性
+执行 Playwright 测试，验证注册登录→创建团队空间→邀请成员→创建仓库→上传文件→协同提交→查看历史→恢复版本→生成分享链接→回收站恢复的完整协作流程，同时校验全链路 UI 风格统一、无样式异常、权限控制准确。
+ Step 17: 全前端流程验收通过，提交最终优化代码
+执行 git add . && git commit -m "test: pass frontend full flow E2E and UI consistency test"
+Task 11: 部署配置与开源交付
+Files:
+Create: Dockerfile
+Create: README.md
+Create: docs/deploy.md
+Create: docs/mcp-integration.md
+Create: docs/roadmap.md
+Create: LICENSE
+Test: tests/deploy-smoke.spec.ts
+ Step 1: 编写多阶段 Docker 镜像构建文件
+分别构建后端与前端生产镜像，精简镜像体积，配置健康检查与环境变量注入。
+ Step 2: 编写生产环境 Docker Compose 配置
+包含数据库、后端、前端、Nginx 反向代理，支持数据持久化与一键部署，配置数据卷挂载备份路径。
+ Step 3: 部署配置验收，提交代码
+执行 git add . && git commit -m "chore: add docker build and production compose config"
+ Step 4: 编写项目 README 文档
+包含项目介绍、核心特性、快速启动、架构说明、UI 设计理念、开源协议等信息，突出「团队空间协同、非技术友好、单主干版本管理、AI 编辑器原生接入、企业级安全与 UI」定位。
+ Step 5: 编写私有化部署与 MCP 接入文档
+包含环境要求、部署步骤、数据备份、Cursor/Open Code MCP 接入教程、常见问题排查指南；明确 MVP 认证方式为手机号登录，企业 SSO 放入后续 Roadmap。
+ Step 6: 编写产品 Roadmap 文档
+明确 v1.0 MVP 能力清单，规划 v1.1/v1.2 迭代方向，包含企业 SSO、对象存储、通知推送、统计大盘等后续能力。
+ Step 7: 文档编写验收，提交代码
+执行 git add . && git commit -m "docs: complete README, deployment, MCP guide and roadmap"
+ Step 8: 执行部署冒烟测试
+执行 Docker 一键部署，验证服务正常启动、核心功能可用、MCP 接口可正常调用、空间协作流程正常、UI 渲染无异常。
+ Step 9: 部署验收通过，提交最终配置
+执行 git add . && git commit -m "test: pass deployment smoke test"
+Task 12: 集成测试与整体验收
+Files:
+Modify: tests/e2e/full-flow.spec.ts
+Test: tests/e2e/full-flow.spec.ts
+ Step 1: 编写全流程 E2E 测试用例
+覆盖完整链路：手机号注册→自动生成个人空间→创建团队空间→邀请成员→成员加入→空间内创建仓库→提交 HTML 新版本→并发冲突场景→二次提交生成新版本→查看历史→恢复旧版本生成新版本→创建空间范围 Access Token→MCP 工具拉取 / 提交→生成双模式分享链接→源码分享提交新版本→软删除仓库→回收站恢复→审计日志查询，同步校验越权访问拦截与 UI 风格一致性。
+ Step 2: 运行全流程测试
+执行 pnpm test:e2e，验证所有核心场景无阻塞性问题，版本历史完整连续无断层，空间权限控制准确，安全防护生效，UI 风格统一无偏差。
+ Step 3: 修复测试中发现的边界问题
+处理空空间、空仓库、大文件、特殊字符文件名、Token 过期、分享失效、成员移除后权限回收、版本恢复冲突、UI 样式异常等边界场景，提升稳定性与一致性。
+ Step 4: 边界问题修复验收，提交代码
+执行 git add . && git commit -m "fix: resolve edge cases and security issues found in full flow test"
+ Step 5: 最终功能验收
+对照需求清单逐项验证，确认团队工作空间、单主干线性版本、并发冲突处理、手机号登录、Access Token、MCP 接入、双模式分享、审计日志、内容安全、软删除回收站、基础搜索、企业级现代 UI 十二项核心能力全部交付完成，符合非技术人员使用体验与企业协同场景。
+ Step 6: 提交最终验收版本
+执行 git add . && git commit -m "release: v1.0.0 MVP pass full acceptance"
