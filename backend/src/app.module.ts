@@ -8,6 +8,7 @@ import { WorkspaceModule } from './workspace/workspace.module';
 import { GitModule } from './git/git.module';
 import { RepoModule } from './repo/repo.module';
 import { VersionModule } from './version/version.module';
+import { ShareModule } from './share/share.module';
 import { AuditMiddleware } from './common/middlewares/audit.middleware';
 
 @Module({
@@ -22,6 +23,7 @@ import { AuditMiddleware } from './common/middlewares/audit.middleware';
     GitModule,
     RepoModule,
     VersionModule,
+    ShareModule,
   ],
   controllers: [AppController],
   providers: [AppService],
