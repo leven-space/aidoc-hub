@@ -9,6 +9,7 @@ import { GitModule } from './git/git.module';
 import { RepoModule } from './repo/repo.module';
 import { VersionModule } from './version/version.module';
 import { ShareModule } from './share/share.module';
+import { McpModule } from './mcp/mcp.module';
 import { AuditMiddleware } from './common/middlewares/audit.middleware';
 
 @Module({
@@ -24,6 +25,7 @@ import { AuditMiddleware } from './common/middlewares/audit.middleware';
     RepoModule,
     VersionModule,
     ShareModule,
+    McpModule,
   ],
   controllers: [AppController],
   providers: [AppService],
