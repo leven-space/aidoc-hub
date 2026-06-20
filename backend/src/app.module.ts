@@ -10,7 +10,9 @@ import { RepoModule } from './repo/repo.module';
 import { VersionModule } from './version/version.module';
 import { ShareModule } from './share/share.module';
 import { McpModule } from './mcp/mcp.module';
+import { AuditModule } from './audit/audit.module';
 import { AuditMiddleware } from './common/middlewares/audit.middleware';
+import { HttpLoggerMiddleware } from './common/middlewares/http-logger.middleware';
 
 @Module({
   imports: [
@@ -26,12 +28,13 @@ import { AuditMiddleware } from './common/middlewares/audit.middleware';
     VersionModule,
     ShareModule,
     McpModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuditMiddleware).forRoutes('*');
+    consumer.apply(HttpLoggerMiddleware, AuditMiddleware).forRoutes('*');
   }
 }

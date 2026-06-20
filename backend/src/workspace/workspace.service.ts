@@ -60,6 +60,44 @@ export class WorkspaceService {
     return { success: true };
   }
 
+  async listDeleted(userId: string) {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    return this.prisma.workspace.findMany({
+      where: {
+        isDeleted: true,
+        deletedAt: { gte: thirtyDaysAgo },
+        members: { some: { userId, role: 'ADMIN' } },
+      },
+      orderBy: { deletedAt: 'desc' },
+    });
+  }
+
+  async restore(workspaceId: string, userId: string) {
+    await this.checkAdmin(workspaceId, userId);
+    const workspace = await this.prisma.workspace.findFirst({
+      where: { id: workspaceId, isDeleted: true },
+    });
+    if (!workspace) {
+      throw new NotFoundException('Deleted workspace not found');
+    }
+    return this.prisma.workspace.update({
+      where: { id: workspaceId },
+      data: { isDeleted: false, deletedAt: null },
+    });
+  }
+
+  async permanentDelete(workspaceId: string, userId: string) {
+    await this.checkAdmin(workspaceId, userId);
+    const workspace = await this.prisma.workspace.findFirst({
+      where: { id: workspaceId, isDeleted: true },
+    });
+    if (!workspace) {
+      throw new NotFoundException('Deleted workspace not found');
+    }
+    await this.prisma.workspace.delete({ where: { id: workspaceId } });
+    return { success: true };
+  }
+
   async update(workspaceId: string, userId: string, name?: string, description?: string) {
     await this.checkAdmin(workspaceId, userId);
     return this.prisma.workspace.update({

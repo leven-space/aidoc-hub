@@ -229,6 +229,25 @@ export class GitService {
     };
   }
 
+  async listFiles(
+    workspaceId: string,
+    repoName: string,
+    version?: string,
+  ): Promise<string[]> {
+    const dir = this.getRepoPath(workspaceId, repoName);
+    this.ensureRepoExists(dir);
+
+    let oid = version;
+    if (!oid) {
+      const log = await git.log({ fs, dir, depth: 1 });
+      oid = log[0]?.oid;
+    }
+    if (!oid) return [];
+
+    const files = await this.listFilesInTree(dir, oid);
+    return files.filter((f) => f !== 'README.md');
+  }
+
   private async listFilesInTree(dir: string, oid: string): Promise<string[]> {
     const files: string[] = [];
     const tree = await git.readTree({ fs, dir, oid });

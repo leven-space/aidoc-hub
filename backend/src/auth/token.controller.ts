@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { TokenService } from './token.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { CreateTokenDto } from './dto/auth.dto';
 
 @Controller('tokens')
 @UseGuards(JwtAuthGuard)
@@ -19,7 +20,7 @@ export class TokenController {
   @Post()
   create(
     @Request() req: any,
-    @Body() body: { name: string; scope: 'READ' | 'READ_WRITE'; expiresAt?: string },
+    @Body() body: CreateTokenDto,
   ) {
     return this.tokenService.createToken(
       req.user.userId,

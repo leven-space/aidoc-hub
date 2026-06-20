@@ -9,7 +9,7 @@ export class TokenService {
   async createToken(
     userId: string,
     name: string,
-    scope: 'READ' | 'READ_WRITE',
+    scope: 'READ' | 'READ_WRITE' = 'READ',
     expiresAt?: Date,
   ) {
     const rawToken = `adh_${randomBytes(32).toString('hex')}`;

@@ -27,6 +27,11 @@ export class WorkspaceController {
     return this.workspaceService.findAll(req.user.userId);
   }
 
+  @Get('recycle/list')
+  listDeleted(@Request() req: any) {
+    return this.workspaceService.listDeleted(req.user.userId);
+  }
+
   @Get(':id')
   findOne(@Request() req: any, @Param('id') id: string) {
     return this.workspaceService.findOne(id, req.user.userId);
@@ -44,6 +49,16 @@ export class WorkspaceController {
   @Delete(':id')
   softDelete(@Request() req: any, @Param('id') id: string) {
     return this.workspaceService.softDelete(id, req.user.userId);
+  }
+
+  @Post(':id/restore')
+  restore(@Request() req: any, @Param('id') id: string) {
+    return this.workspaceService.restore(id, req.user.userId);
+  }
+
+  @Delete(':id/permanent')
+  permanentDelete(@Request() req: any, @Param('id') id: string) {
+    return this.workspaceService.permanentDelete(id, req.user.userId);
   }
 
   // Member management

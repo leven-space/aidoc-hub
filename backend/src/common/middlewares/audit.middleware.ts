@@ -1,4 +1,4 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -15,6 +15,7 @@ const AUDIT_PATHS = [
 
 @Injectable()
 export class AuditMiddleware implements NestMiddleware {
+  private readonly logger = new Logger('Audit');
   constructor(private prisma: PrismaService) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
@@ -39,8 +40,9 @@ export class AuditMiddleware implements NestMiddleware {
           ip,
         },
       });
-    } catch {
+    } catch (err) {
       // Don't fail the request if audit logging fails
+      this.logger.warn(`Audit log failed for ${req.method} ${req.path}: ${err}`);
     }
   }
 

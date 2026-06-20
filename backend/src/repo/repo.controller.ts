@@ -33,6 +33,14 @@ export class RepoController {
     return this.repoService.listRepos(workspaceId, req.user.userId);
   }
 
+  @Get('recycle/list')
+  listDeleted(
+    @Request() req: any,
+    @Param('workspaceId') workspaceId: string,
+  ) {
+    return this.repoService.listDeletedRepos(workspaceId, req.user.userId);
+  }
+
   @Get(':repoId')
   get(
     @Request() req: any,
@@ -49,6 +57,24 @@ export class RepoController {
     @Param('repoId') repoId: string,
   ) {
     return this.repoService.softDeleteRepo(repoId, workspaceId, req.user.userId);
+  }
+
+  @Post(':repoId/restore')
+  restoreRepo(
+    @Request() req: any,
+    @Param('workspaceId') workspaceId: string,
+    @Param('repoId') repoId: string,
+  ) {
+    return this.repoService.restoreRepo(repoId, workspaceId, req.user.userId);
+  }
+
+  @Delete(':repoId/permanent')
+  permanentDeleteRepo(
+    @Request() req: any,
+    @Param('workspaceId') workspaceId: string,
+    @Param('repoId') repoId: string,
+  ) {
+    return this.repoService.permanentDeleteRepo(repoId, workspaceId, req.user.userId);
   }
 
   @Post(':repoId/commits')

@@ -6,8 +6,8 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { GitService } from '../git/git.service';
 import { WorkspaceService } from '../workspace/workspace.service';
 
-const ALLOWED_EXTENSIONS = ['.html', '.htm'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const BLOCKED_EXTENSIONS = ['.exe', '.sh', '.bat', '.cmd', '.ps1', '.msi'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_FILES_PER_COMMIT = 50;
 
 @Injectable()
@@ -88,11 +88,14 @@ export class RepoService {
     // Validate files
     this.validateFiles(files);
 
-    // Sanitize HTML content
-    const sanitizedFiles = files.map((f) => ({
-      ...f,
-      content: this.sanitizeHtml(f.content),
-    }));
+    // Sanitize HTML content only; pass through other file types as-is
+    const processedFiles = files.map((f) => {
+      const ext = f.filePath.substring(f.filePath.lastIndexOf('.')).toLowerCase();
+      if (['.html', '.htm', '.svg', '.xml'].includes(ext)) {
+        return { ...f, content: this.sanitizeHtml(f.content) };
+      }
+      return f;
+    });
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     const author = user?.name || userId;
@@ -100,7 +103,7 @@ export class RepoService {
     const result = await this.gitService.commitFiles(
       workspaceId,
       repoId,
-      sanitizedFiles,
+      processedFiles,
       message,
       author,
       baseVersion,
@@ -118,8 +121,46 @@ export class RepoService {
 
   async getFiles(repoId: string, workspaceId: string, userId: string, version?: string) {
     await this.workspaceService.checkMembership(workspaceId, userId);
-    const history = await this.gitService.getHistory(workspaceId, repoId);
-    return history;
+    return this.gitService.listFiles(workspaceId, repoId, version);
+  }
+
+  async listDeletedRepos(workspaceId: string, userId: string) {
+    await this.workspaceService.checkAdmin(workspaceId, userId);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    return this.prisma.repository.findMany({
+      where: {
+        workspaceId,
+        isDeleted: true,
+        deletedAt: { gte: thirtyDaysAgo },
+      },
+      orderBy: { deletedAt: 'desc' },
+    });
+  }
+
+  async restoreRepo(repoId: string, workspaceId: string, userId: string) {
+    await this.workspaceService.checkAdmin(workspaceId, userId);
+    const repo = await this.prisma.repository.findFirst({
+      where: { id: repoId, workspaceId, isDeleted: true },
+    });
+    if (!repo) {
+      throw new NotFoundException('Deleted repository not found');
+    }
+    return this.prisma.repository.update({
+      where: { id: repoId },
+      data: { isDeleted: false, deletedAt: null },
+    });
+  }
+
+  async permanentDeleteRepo(repoId: string, workspaceId: string, userId: string) {
+    await this.workspaceService.checkAdmin(workspaceId, userId);
+    const repo = await this.prisma.repository.findFirst({
+      where: { id: repoId, workspaceId, isDeleted: true },
+    });
+    if (!repo) {
+      throw new NotFoundException('Deleted repository not found');
+    }
+    await this.prisma.repository.delete({ where: { id: repoId } });
+    return { success: true };
   }
 
   async readFile(
@@ -141,12 +182,16 @@ export class RepoService {
       throw new BadRequestException(`Maximum ${MAX_FILES_PER_COMMIT} files per commit`);
     }
     for (const file of files) {
-      const ext = file.filePath.substring(file.filePath.lastIndexOf('.'));
-      if (!ALLOWED_EXTENSIONS.includes(ext.toLowerCase())) {
-        throw new BadRequestException(`Only ${ALLOWED_EXTENSIONS.join(', ')} files are allowed`);
+      const ext = file.filePath.substring(file.filePath.lastIndexOf('.')).toLowerCase();
+      if (BLOCKED_EXTENSIONS.includes(ext)) {
+        throw new BadRequestException(`File type ${ext} is not allowed for security reasons`);
+      }
+      // Prevent path traversal
+      if (file.filePath.includes('..') || file.filePath.startsWith('/')) {
+        throw new BadRequestException(`Invalid file path: ${file.filePath}`);
       }
       if (Buffer.byteLength(file.content) > MAX_FILE_SIZE) {
-        throw new BadRequestException(`File ${file.filePath} exceeds maximum size of 5MB`);
+        throw new BadRequestException(`File ${file.filePath} exceeds maximum size of 10MB`);
       }
     }
   }

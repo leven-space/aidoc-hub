@@ -3,7 +3,6 @@ import { Layout, Menu, Typography, Avatar, Dropdown, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   HomeOutlined,
-  TeamOutlined,
   FolderOutlined,
   SettingOutlined,
   UserOutlined,
@@ -12,6 +11,8 @@ import {
   LogoutOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { GlobalSearch } from '../components/GlobalSearch';
 
 const { Header, Sider, Content } = Layout;
 
@@ -41,11 +42,24 @@ export function MainLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout } = useAuth();
+
+  const selectedKey = ['/', '/recycle', '/settings/tokens', '/settings/audit'].find((p) =>
+    location.pathname === p || (p !== '/' && location.pathname.startsWith(p)),
+  ) || (location.pathname.startsWith('/workspaces') ? '/' : location.pathname);
 
   const userMenuItems: MenuProps['items'] = [
-    { key: 'profile', icon: <UserOutlined />, label: '个人设置' },
+    { key: 'tokens', icon: <SettingOutlined />, label: 'Token 管理' },
     { type: 'divider' },
-    { key: 'logout', icon: <LogoutOutlined />, label: '退出登录' },
+    {
+      key: 'logout',
+      icon: <LogoutOutlined />,
+      label: '退出登录',
+      onClick: () => {
+        logout();
+        navigate('/login');
+      },
+    },
   ];
 
   return (
@@ -73,7 +87,9 @@ export function MainLayout() {
             alignItems: 'center',
             justifyContent: 'center',
             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            cursor: 'pointer',
           }}
+          onClick={() => navigate('/')}
         >
           <Typography.Title level={4} style={{ color: '#fff', margin: 0 }}>
             {collapsed ? 'ADH' : 'AI Doc Hub'}
@@ -82,7 +98,8 @@ export function MainLayout() {
         <Menu
           theme="dark"
           mode="inline"
-          selectedKeys={[location.pathname]}
+          selectedKeys={[selectedKey]}
+          defaultOpenKeys={['/settings']}
           items={menuItems}
           onClick={({ key }) => navigate(key)}
         />
@@ -101,7 +118,7 @@ export function MainLayout() {
             zIndex: 100,
           }}
         >
-          <Space>
+          <Space size={16}>
             {collapsed ? (
               <MenuUnfoldOutlined
                 onClick={() => setCollapsed(false)}
@@ -113,11 +130,20 @@ export function MainLayout() {
                 style={{ fontSize: 18, cursor: 'pointer' }}
               />
             )}
+            <GlobalSearch />
           </Space>
-          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+          <Dropdown
+            menu={{
+              items: userMenuItems,
+              onClick: ({ key }) => {
+                if (key === 'tokens') navigate('/settings/tokens');
+              },
+            }}
+            placement="bottomRight"
+          >
             <Space style={{ cursor: 'pointer' }}>
               <Avatar icon={<UserOutlined />} size="small" />
-              <span>用户</span>
+              <span>{user?.name || '用户'}</span>
             </Space>
           </Dropdown>
         </Header>
