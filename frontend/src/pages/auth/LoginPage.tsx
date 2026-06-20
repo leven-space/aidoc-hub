@@ -5,6 +5,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { getApiErrorMessage } from '../../utils/apiError';
+import { loginPasswordRules, phoneRules } from '../../utils/formRules';
 
 export function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -33,22 +34,10 @@ export function LoginPage() {
         {t('auth.login')}
       </Typography.Title>
       <Form layout="vertical" onFinish={onFinish} size="large">
-        <Form.Item
-          name="phone"
-          rules={[
-            { required: true, message: t('validation.phoneRequired') },
-            { pattern: /^1[3-9]\d{9}$/, message: t('validation.phoneInvalid') },
-          ]}
-        >
+        <Form.Item name="phone" rules={phoneRules(t)}>
           <Input prefix={<MobileOutlined />} placeholder={t('auth.phone')} maxLength={11} />
         </Form.Item>
-        <Form.Item
-          name="password"
-          rules={[
-            { required: true, message: t('validation.passwordRequired') },
-            { min: 6, message: t('validation.passwordMin') },
-          ]}
-        >
+        <Form.Item name="password" rules={loginPasswordRules(t)}>
           <Input.Password prefix={<LockOutlined />} placeholder={t('auth.password')} />
         </Form.Item>
         <Form.Item>

@@ -12,6 +12,8 @@ import {
   QuestionCircleOutlined,
   ApiOutlined,
   ToolOutlined,
+  KeyOutlined,
+  AuditOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -37,12 +39,28 @@ export function MainLayout() {
   };
 
   const settingsChildren: MenuProps['items'] = [
-    { key: '/settings/tokens', label: <span data-tour="nav-tokens">{t('nav.tokens')}</span> },
-    { key: '/settings/mcp', label: <span data-tour="nav-mcp">{t('nav.mcp')}</span> },
+    {
+      key: '/settings/tokens',
+      icon: <KeyOutlined />,
+      label: <span data-tour="nav-tokens">{t('nav.tokens')}</span>,
+    },
+    {
+      key: '/settings/mcp',
+      icon: <ApiOutlined />,
+      label: <span data-tour="nav-mcp">{t('nav.mcp')}</span>,
+    },
     ...(isSystemAdmin
-      ? [{ key: '/settings/system', label: t('nav.systemConfig'), icon: <ToolOutlined /> }]
+      ? [
+          { key: '/settings/system', icon: <ToolOutlined />, label: t('nav.systemConfig') },
+          { key: '/settings/audit', icon: <AuditOutlined />, label: t('nav.audit') },
+        ]
       : []),
-    { key: '/settings/audit', label: t('nav.audit') },
+  ];
+
+  const settingsPaths = [
+    '/settings/tokens',
+    '/settings/mcp',
+    ...(isSystemAdmin ? ['/settings/system', '/settings/audit'] : []),
   ];
 
   const menuItems: MenuProps['items'] = [
@@ -64,7 +82,6 @@ export function MainLayout() {
     },
   ];
 
-  const settingsPaths = ['/settings/tokens', '/settings/mcp', '/settings/system', '/settings/audit'];
   const selectedKey =
     ['/', '/recycle', ...settingsPaths].find(
       (p) => location.pathname === p || (p !== '/' && location.pathname.startsWith(p)),

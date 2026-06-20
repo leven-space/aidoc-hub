@@ -70,6 +70,7 @@
     "phoneInvalid": "Please enter a valid phone number",
     "passwordRequired": "Please enter your password",
     "passwordMin": "Password must be at least 6 characters",
+    "passwordAlphanumeric": "Password must include both letters and numbers",
     "confirmPasswordRequired": "Please confirm your password",
     "passwordMismatch": "Passwords do not match",
     "nameRequired": "Please enter a name",

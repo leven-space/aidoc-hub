@@ -8,11 +8,20 @@ export function SetupGuard({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   useEffect(() => {
+    let cancelled = false;
+    setInitialized(null);
     setupApi
       .status()
-      .then((res) => setInitialized(res.initialized))
-      .catch(() => setInitialized(false));
-  }, []);
+      .then((res) => {
+        if (!cancelled) setInitialized(res.initialized);
+      })
+      .catch(() => {
+        if (!cancelled) setInitialized(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname]);
 
   if (initialized === null) {
     return (
@@ -34,7 +43,8 @@ export function SetupGuard({ children }: { children: ReactNode }) {
   }
 
   if (initialized && location.pathname === '/setup') {
-    return <Navigate to="/login" replace />;
+    const hasToken = !!localStorage.getItem('accessToken');
+    return <Navigate to={hasToken ? '/' : '/login'} replace />;
   }
 
   return children;

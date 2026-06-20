@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { getApiErrorMessage } from '../../utils/apiError';
+import { confirmPasswordRules, passwordRules, phoneRules } from '../../utils/formRules';
 
 function getPasswordStrength(password: string): number {
   if (!password) return 0;
@@ -59,21 +60,13 @@ export function RegisterPage() {
         <Form.Item name="name">
           <Input prefix={<UserOutlined />} placeholder={t('auth.nameOptional')} />
         </Form.Item>
-        <Form.Item
-          name="phone"
-          rules={[
-            { required: true, message: t('validation.phoneRequired') },
-            { pattern: /^1[3-9]\d{9}$/, message: t('validation.phoneInvalid') },
-          ]}
-        >
+        <Form.Item name="phone" rules={phoneRules(t)}>
           <Input prefix={<MobileOutlined />} placeholder={t('auth.phone')} maxLength={11} />
         </Form.Item>
         <Form.Item
           name="password"
-          rules={[
-            { required: true, message: t('validation.passwordRequired') },
-            { min: 6, message: t('validation.passwordMin') },
-          ]}
+          rules={passwordRules(t)}
+          extra={t('validation.passwordAlphanumeric')}
         >
           <Input.Password
             prefix={<LockOutlined />}
@@ -97,17 +90,7 @@ export function RegisterPage() {
         <Form.Item
           name="confirm"
           dependencies={['password']}
-          rules={[
-            { required: true, message: t('validation.confirmPasswordRequired') },
-            ({ getFieldValue }) => ({
-              validator(_, value) {
-                if (!value || getFieldValue('password') === value) {
-                  return Promise.resolve();
-                }
-                return Promise.reject(new Error(t('validation.passwordMismatch')));
-              },
-            }),
-          ]}
+          rules={confirmPasswordRules(t)}
         >
           <Input.Password prefix={<LockOutlined />} placeholder={t('auth.confirmPassword')} />
         </Form.Item>

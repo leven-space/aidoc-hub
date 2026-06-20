@@ -8,7 +8,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { SystemService } from './system.service';
 import { InitializeSetupDto, UpdateSystemConfigDto } from './dto/system.dto';
@@ -21,12 +21,13 @@ export class SystemController {
   constructor(private systemService: SystemService) {}
 
   @Get('setup/status')
+  @SkipThrottle()
   getSetupStatus() {
     return this.systemService.getSetupStatus();
   }
 
   @Post('setup/initialize')
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @SkipThrottle()
   async initialize(
     @Body() dto: InitializeSetupDto,
     @Res({ passthrough: true }) res: Response,

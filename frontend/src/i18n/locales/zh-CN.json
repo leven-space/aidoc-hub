@@ -70,6 +70,7 @@
     "phoneInvalid": "请输入有效的手机号",
     "passwordRequired": "请输入密码",
     "passwordMin": "密码至少 6 位",
+    "passwordAlphanumeric": "密码须同时包含字母和数字",
     "confirmPasswordRequired": "请确认密码",
     "passwordMismatch": "两次密码不一致",
     "nameRequired": "请输入名称",

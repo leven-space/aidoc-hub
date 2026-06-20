@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Table, Form, Input, DatePicker, Button, Space, message, Select } from 'antd';
 import { DownloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { PageContainer } from '../../components/PageContainer';
 import { auditApi, workspaceApi } from '../../services';
+import { useAuth } from '../../contexts/AuthContext';
 import { getApiErrorMessage } from '../../utils/apiError';
 import type { AuditLog, Workspace } from '../../types';
 
 export function AuditLogPage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -40,8 +43,13 @@ export function AuditLogPage() {
   };
 
   useEffect(() => {
+    if (user?.systemRole !== 'SYSTEM_ADMIN') return;
     load();
-  }, [page, filters]);
+  }, [page, filters, user?.systemRole]);
+
+  if (user?.systemRole !== 'SYSTEM_ADMIN') {
+    return <Navigate to="/" replace />;
+  }
 
   const handleSearch = (values: {
     workspaceId?: string;

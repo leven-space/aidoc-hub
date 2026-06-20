@@ -66,12 +66,13 @@ api.interceptors.response.use(
       error.message;
     const code = error.response?.data?.code as string | undefined;
     let message: string;
-    if (code && i18n.exists(`errors.${code}`)) {
-      message = i18n.t(`errors.${code}`);
-    } else if (typeof rawMessage === 'string') {
+    if (typeof rawMessage === 'string' && rawMessage.trim()) {
+      // Prefer server message — it may include field-level validation details.
       message = rawMessage;
     } else if (Array.isArray(rawMessage)) {
       message = rawMessage.join(', ');
+    } else if (code && i18n.exists(`errors.${code}`)) {
+      message = i18n.t(`errors.${code}`);
     } else {
       message = i18n.t('common.requestFailed');
     }
