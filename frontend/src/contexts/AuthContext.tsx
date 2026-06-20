@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { User } from '../types';
 import { authApi } from '../services';
-import { setAuthCookie, clearAuthCookie } from '../utils/authCookie';
+import { clearAuthCookie } from '../utils/authCookie';
 
 interface AuthContextValue {
   user: User | null;
@@ -25,7 +25,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithToken = useCallback((accessToken: string, nextUser: User) => {
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('user', JSON.stringify(nextUser));
-    setAuthCookie(accessToken);
     setUser(nextUser);
   }, []);
 
@@ -45,7 +44,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (token) {
-      setAuthCookie(token);
       refreshProfile().finally(() => setLoading(false));
     } else {
       clearAuthCookie();
@@ -64,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    authApi.logout().catch(() => undefined);
     localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
     clearAuthCookie();

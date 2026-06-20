@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: aidochub
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -26,7 +26,7 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/aidochub?schema=public
-      JWT_SECRET: aidochub-dev-secret-key-change-in-production
+      JWT_SECRET: ${JWT_SECRET:-aidochub-dev-secret-key-change-in-production}
       JWT_EXPIRES_IN: 7d
       NODE_ENV: development
     ports:

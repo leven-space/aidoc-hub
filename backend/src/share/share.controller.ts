@@ -10,13 +10,20 @@ import {
   Request,
   Res,
 } from '@nestjs/common';
-import type { Response } from 'express';
+import { Throttle } from '@nestjs/throttler';
+import { JwtService } from '@nestjs/jwt';
+import type { Request as ExpressRequest, Response } from 'express';
 import { ShareService } from './share.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ShareAccessDto, ShareReadFileDto } from './dto/share.dto';
+import { hasValidShareGrant, setShareGrantCookie } from './share-access.util';
 
 @Controller('shares')
 export class ShareController {
-  constructor(private shareService: ShareService) {}
+  constructor(
+    private shareService: ShareService,
+    private jwtService: JwtService,
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -47,43 +54,66 @@ export class ShareController {
     );
   }
 
-  @Get('validate/:token')
+  @Post('validate/:token')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   validate(
     @Param('token') token: string,
-    @Query('password') password?: string,
+    @Body() body: ShareAccessDto,
+    @Request() req: ExpressRequest,
+    @Res({ passthrough: true }) res: Response,
   ) {
-    return this.shareService.validateShare(token, password);
+    return this.handleShareAccess(token, body.password, req, res);
+  }
+
+  @Post(':token/access')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  access(
+    @Param('token') token: string,
+    @Body() body: ShareAccessDto,
+    @Request() req: ExpressRequest,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.handleShareAccess(token, body.password, req, res);
   }
 
   @Get(':token/preview/*splat')
   async servePreview(
     @Param('token') token: string,
     @Param('splat') splat: string | string[],
-    @Query('password') password?: string,
-    @Res() res?: Response,
+    @Request() req: ExpressRequest,
+    @Res() res: Response,
   ) {
     const rawPath = Array.isArray(splat) ? splat.join('/') : splat;
     const decodedPath = decodeURIComponent(rawPath);
+    const hasGrant = hasValidShareGrant(req, this.jwtService, token);
     return this.shareService.serveSharePreview(
       token,
       decodedPath,
-      password,
-      res!,
+      undefined,
+      res,
+      hasGrant,
     );
   }
 
-  @Get(':token/file')
+  @Post(':token/file')
   readFile(
     @Param('token') token: string,
-    @Query('path') filePath: string,
-    @Query('password') password?: string,
+    @Body() body: ShareReadFileDto,
+    @Request() req: ExpressRequest,
   ) {
-    return this.shareService.readShareFile(token, filePath, password);
+    const hasGrant = hasValidShareGrant(req, this.jwtService, token);
+    return this.shareService.readShareFile(
+      token,
+      body.path,
+      undefined,
+      hasGrant,
+    );
   }
 
   @Get(':token/view')
-  getView(@Param('token') token: string, @Query('password') password?: string) {
-    return this.shareService.getShareView(token, password);
+  getView(@Param('token') token: string, @Request() req: ExpressRequest) {
+    const hasGrant = hasValidShareGrant(req, this.jwtService, token);
+    return this.shareService.getShareView(token, undefined, hasGrant);
   }
 
   @Get()
@@ -100,5 +130,21 @@ export class ShareController {
   @UseGuards(JwtAuthGuard)
   deactivate(@Request() req: any, @Param('id') id: string) {
     return this.shareService.deactivateShare(id, req.user.userId);
+  }
+
+  private async handleShareAccess(
+    token: string,
+    password: string | undefined,
+    req: ExpressRequest,
+    res: Response,
+  ) {
+    const result = await this.shareService.getShareView(token, password);
+    if (
+      password &&
+      !('requiresPassword' in result && result.requiresPassword)
+    ) {
+      setShareGrantCookie(res, this.jwtService, token);
+    }
+    return result;
   }
 }

@@ -44,6 +44,7 @@ export const authApi = {
     api.post<AuthResponse>('/auth/register', data).then((r) => r.data),
   login: (data: { phone: string; password: string }) =>
     api.post<AuthResponse>('/auth/login', data).then((r) => r.data),
+  logout: () => api.post<{ success: boolean }>('/auth/logout').then((r) => r.data),
   profile: () => api.get<User>('/auth/profile').then((r) => r.data),
 };
 
@@ -99,8 +100,6 @@ export const repoApi = {
   ) => {
     const params = new URLSearchParams();
     if (version) params.set('version', version);
-    const token = localStorage.getItem('accessToken');
-    if (token) params.set('token', token);
     const query = params.toString();
     const encodedPath = filePath
       .split('/')
@@ -174,26 +173,23 @@ export const shareApi = {
   list: (workspaceId: string, repoId: string) =>
     api.get<ShareInfo[]>('/shares', { params: { workspaceId, repoId } }).then((r) => r.data),
   deactivate: (id: string) => api.delete(`/shares/${id}`).then((r) => r.data),
-  getView: (token: string, password?: string) =>
+  getView: (token: string) =>
     api
-      .get<ShareView | SharePasswordRequired>(`/shares/${token}/view`, {
-        params: password ? { password } : undefined,
+      .get<ShareView | SharePasswordRequired>(`/shares/${token}/view`)
+      .then((r) => r.data),
+  access: (token: string, password?: string) =>
+    api
+      .post<ShareView | SharePasswordRequired>(`/shares/${token}/access`, {
+        password,
       })
       .then((r) => r.data),
-  readFile: (token: string, path: string, password?: string) =>
-    api
-      .get<string>(`/shares/${token}/file`, {
-        params: { path, ...(password ? { password } : {}) },
-      })
-      .then((r) => r.data),
-  getPreviewUrl: (token: string, filePath: string, password?: string) => {
-    const params = new URLSearchParams();
-    if (password) params.set('password', password);
-    const query = params.toString();
+  readFile: (token: string, path: string) =>
+    api.post<string>(`/shares/${token}/file`, { path }).then((r) => r.data),
+  getPreviewUrl: (token: string, filePath: string) => {
     const encodedPath = filePath
       .split('/')
       .map((segment) => encodeURIComponent(segment))
       .join('/');
-    return `/api/shares/${token}/preview/${encodedPath}${query ? `?${query}` : ''}`;
+    return `/api/shares/${token}/preview/${encodedPath}`;
   },
 };

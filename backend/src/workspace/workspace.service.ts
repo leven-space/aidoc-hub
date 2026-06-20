@@ -1,5 +1,6 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
 import { AppException, ErrorCode } from '../common/exceptions/app.exception';
+import { maskPhone } from '../common/utils/phone.util';
 import { PrismaService } from '../common/prisma/prisma.service';
 
 @Injectable()
@@ -158,7 +159,7 @@ export class WorkspaceService {
       data: {
         userId: targetUser.id,
         workspaceId,
-        role: role as any,
+        role: role as 'ADMIN' | 'EDITOR' | 'VIEWER',
       },
       include: { user: true },
     });
@@ -173,7 +174,7 @@ export class WorkspaceService {
     await this.checkAdmin(workspaceId, userId);
     return this.prisma.workspaceMember.update({
       where: { id: memberId },
-      data: { role: role as any },
+      data: { role: role as 'ADMIN' | 'EDITOR' | 'VIEWER' },
     });
   }
 
@@ -196,13 +197,24 @@ export class WorkspaceService {
   }
 
   async listMembers(workspaceId: string, userId: string) {
-    await this.checkMembership(workspaceId, userId);
-    return this.prisma.workspaceMember.findMany({
+    const member = await this.checkMembership(workspaceId, userId);
+    const isAdmin = member.role === 'ADMIN';
+    const members = await this.prisma.workspaceMember.findMany({
       where: { workspaceId },
       include: {
         user: { select: { id: true, name: true, avatar: true, phone: true } },
       },
     });
+    if (isAdmin) {
+      return members;
+    }
+    return members.map((item) => ({
+      ...item,
+      user: {
+        ...item.user,
+        phone: maskPhone(item.user.phone),
+      },
+    }));
   }
 
   // Permission helpers

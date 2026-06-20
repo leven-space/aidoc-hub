@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { WorkspaceService } from './workspace.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { InviteMemberDto, UpdateMemberRoleDto } from './dto/member.dto';
 
 @Controller('workspaces')
 @UseGuards(JwtAuthGuard)
@@ -83,7 +84,7 @@ export class WorkspaceController {
   inviteMember(
     @Request() req: any,
     @Param('id') id: string,
-    @Body() body: { phone: string; role: string },
+    @Body() body: InviteMemberDto,
   ) {
     return this.workspaceService.inviteMember(
       id,
@@ -98,7 +99,7 @@ export class WorkspaceController {
     @Request() req: any,
     @Param('id') id: string,
     @Param('memberId') memberId: string,
-    @Body() body: { role: string },
+    @Body() body: UpdateMemberRoleDto,
   ) {
     return this.workspaceService.updateMemberRole(
       id,

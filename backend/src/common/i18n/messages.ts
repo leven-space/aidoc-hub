@@ -38,6 +38,7 @@ const zhCN: Record<ErrorCodeType, string> = {
   [ErrorCode.REGISTRATION_DISABLED]: '公开注册已关闭',
   [ErrorCode.INVALID_PHONE_FORMAT]: '手机号格式无效',
   [ErrorCode.PASSWORD_TOO_SHORT]: '密码至少 6 位',
+  [ErrorCode.PASSWORD_TOO_WEAK]: '密码须至少 6 位且包含字母和数字',
   [ErrorCode.PHONE_ALREADY_REGISTERED]: '该手机号已注册',
   [ErrorCode.INVALID_CREDENTIALS]: '手机号或密码错误',
   [ErrorCode.USER_NOT_FOUND]: '用户不存在',
@@ -93,6 +94,8 @@ const enUS: Record<ErrorCodeType, string> = {
   [ErrorCode.REGISTRATION_DISABLED]: 'Registration is disabled',
   [ErrorCode.INVALID_PHONE_FORMAT]: 'Invalid phone number format',
   [ErrorCode.PASSWORD_TOO_SHORT]: 'Password must be at least 6 characters',
+  [ErrorCode.PASSWORD_TOO_WEAK]:
+    'Password must be at least 6 characters and include letters and numbers',
   [ErrorCode.PHONE_ALREADY_REGISTERED]: 'Phone number already registered',
   [ErrorCode.INVALID_CREDENTIALS]: 'Invalid phone or password',
   [ErrorCode.USER_NOT_FOUND]: 'User not found',

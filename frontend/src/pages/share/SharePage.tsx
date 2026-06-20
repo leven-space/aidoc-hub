@@ -77,7 +77,6 @@ export function SharePage() {
   const { token } = useParams<{ token: string }>();
   const [loading, setLoading] = useState(true);
   const [passwordRequired, setPasswordRequired] = useState(false);
-  const [sharePassword, setSharePassword] = useState('');
   const [shareView, setShareView] = useState<ShareView | null>(null);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [previewContent, setPreviewContent] = useState('');
@@ -87,30 +86,27 @@ export function SharePage() {
   const isHtmlFile = (fp: string) => /\.(html|htm)$/i.test(fp);
   const canViewSource = shareView?.type === 'SOURCE_ACCESS';
 
-  const loadShare = useCallback(
-    async (accessPassword?: string) => {
-      if (!token) return;
-      setLoading(true);
-      try {
-        const result = await shareApi.getView(token, accessPassword);
-        if (result.requiresPassword) {
-          setPasswordRequired(true);
-          setShareView(null);
-          return;
-        }
-        setPasswordRequired(false);
-        setShareView(result);
-        const defaultFile = pickDefaultPreviewFile(result.files);
-        setSelectedFile(defaultFile);
-      } catch (err) {
-        message.error(getApiErrorMessage(err, 'share.invalidLink'));
+  const loadShare = useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const result = await shareApi.getView(token);
+      if (result.requiresPassword) {
+        setPasswordRequired(true);
         setShareView(null);
-      } finally {
-        setLoading(false);
+        return;
       }
-    },
-    [token],
-  );
+      setPasswordRequired(false);
+      setShareView(result);
+      const defaultFile = pickDefaultPreviewFile(result.files);
+      setSelectedFile(defaultFile);
+    } catch (err) {
+      message.error(getApiErrorMessage(err, 'share.invalidLink'));
+      setShareView(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
 
   useEffect(() => {
     loadShare();
@@ -132,7 +128,7 @@ export function SharePage() {
       }
       setPreviewLoading(true);
       try {
-        const content = await shareApi.readFile(token, selectedFile, sharePassword || undefined);
+        const content = await shareApi.readFile(token, selectedFile);
         setPreviewContent(typeof content === 'string' ? content : String(content));
       } catch {
         setPreviewContent('');
@@ -141,16 +137,31 @@ export function SharePage() {
       }
     };
     loadPreview();
-  }, [token, selectedFile, shareView, sharePassword, canViewSource]);
+  }, [token, selectedFile, shareView, canViewSource]);
 
   const handlePasswordSubmit = async (values: { password: string }) => {
-    setSharePassword(values.password);
-    await loadShare(values.password);
+    if (!token) return;
+    setLoading(true);
+    try {
+      const result = await shareApi.access(token, values.password);
+      if (result.requiresPassword) {
+        message.error(t('errors.SHARE_INVALID_PASSWORD'));
+        return;
+      }
+      setPasswordRequired(false);
+      setShareView(result);
+      const defaultFile = pickDefaultPreviewFile(result.files);
+      setSelectedFile(defaultFile);
+    } catch (err) {
+      message.error(getApiErrorMessage(err, 'errors.SHARE_INVALID_PASSWORD'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const previewUrl =
     token && selectedFile && isHtmlFile(selectedFile)
-      ? shareApi.getPreviewUrl(token, selectedFile, sharePassword || undefined)
+      ? shareApi.getPreviewUrl(token, selectedFile)
       : undefined;
 
   if (loading) {

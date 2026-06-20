@@ -3,9 +3,10 @@ import { ShareService } from './share.service';
 import { ShareController } from './share.controller';
 import { WorkspaceModule } from '../workspace/workspace.module';
 import { GitModule } from '../git/git.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [WorkspaceModule, GitModule],
+  imports: [WorkspaceModule, GitModule, AuthModule],
   controllers: [ShareController],
   providers: [ShareService],
   exports: [ShareService],

@@ -3,6 +3,10 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { WorkspaceService } from '../workspace/workspace.service';
 import { SystemService } from '../system/system.service';
 
+function escapeLikePattern(input: string): string {
+  return input.replace(/[%_\\]/g, '\\$&');
+}
+
 @Injectable()
 export class AuditService {
   constructor(
@@ -24,7 +28,7 @@ export class AuditService {
     },
   ) {
     const page = filters.page || 1;
-    const pageSize = filters.pageSize || 20;
+    const pageSize = Math.min(Math.max(filters.pageSize || 20, 1), 100);
 
     if (filters.workspaceId) {
       await this.workspaceService.checkAdmin(filters.workspaceId, userId);
@@ -34,7 +38,7 @@ export class AuditService {
 
     const where: any = {};
     if (filters.action) {
-      where.action = { contains: filters.action };
+      where.action = { contains: escapeLikePattern(filters.action) };
     }
     if (filters.userId) {
       where.userId = filters.userId;

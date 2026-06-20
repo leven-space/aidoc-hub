@@ -173,6 +173,7 @@ export class RepoService {
     version?: string,
   ) {
     await this.workspaceService.checkMembership(workspaceId, userId);
+    this.assertSafeFilePath(filePath);
     return this.gitService.readFileAtVersion(
       workspaceId,
       repoId,

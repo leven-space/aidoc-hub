@@ -13,6 +13,7 @@ import {
 import type { Response } from 'express';
 import { RepoService } from './repo.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { buildAttachmentDisposition } from '../common/utils/content-disposition.util';
 
 @Controller('workspaces/:workspaceId/repos')
 @UseGuards(JwtAuthGuard)
@@ -179,7 +180,7 @@ export class RepoController {
       version,
     );
     res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Content-Disposition', `attachment; filename="${filePath}"`);
+    res.setHeader('Content-Disposition', buildAttachmentDisposition(filePath));
     res.send(content);
   }
 }

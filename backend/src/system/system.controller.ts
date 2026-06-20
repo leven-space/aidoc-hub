@@ -5,12 +5,16 @@ import {
   Patch,
   Post,
   Request,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
+import type { Response } from 'express';
 import { SystemService } from './system.service';
 import { InitializeSetupDto, UpdateSystemConfigDto } from './dto/system.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SystemAdminGuard } from '../common/guards/system-admin.guard';
+import { setAccessTokenCookie } from '../common/utils/auth-cookie.util';
 
 @Controller()
 export class SystemController {
@@ -22,8 +26,14 @@ export class SystemController {
   }
 
   @Post('setup/initialize')
-  initialize(@Body() dto: InitializeSetupDto) {
-    return this.systemService.initialize(dto);
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  async initialize(
+    @Body() dto: InitializeSetupDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.systemService.initialize(dto);
+    setAccessTokenCookie(res, result.accessToken);
+    return result;
   }
 
   @Get('system/config')

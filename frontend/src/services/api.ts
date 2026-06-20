@@ -10,6 +10,7 @@ const isDev = import.meta.env.DEV;
 const api = axios.create({
   baseURL: '/api',
   timeout: 30000,
+  withCredentials: true,
 });
 
 api.interceptors.request.use((config) => {

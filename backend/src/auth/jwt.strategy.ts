@@ -5,6 +5,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { getJwtSecret } from '../common/config/jwt.config';
 
 function extractAccessTokenFromCookie(req: Request): string | null {
   const cookieHeader = req?.headers?.cookie;
@@ -26,15 +27,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
-        (req) => {
-          const token = req?.query?.token;
-          return typeof token === 'string' ? token : null;
-        },
         extractAccessTokenFromCookie,
       ]),
       ignoreExpiration: false,
-      secretOrKey:
-        configService.get<string>('JWT_SECRET') || 'aidochub-dev-secret',
+      secretOrKey: getJwtSecret(configService),
     });
   }
 

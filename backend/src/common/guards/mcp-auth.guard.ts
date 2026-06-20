@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { TokenService } from '../../auth/token.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { getJwtSecret } from '../config/jwt.config';
 
 @Injectable()
 export class McpAuthGuard implements CanActivate {
@@ -50,8 +51,7 @@ export class McpAuthGuard implements CanActivate {
 
     try {
       const payload = this.jwtService.verify(token, {
-        secret:
-          this.configService.get<string>('JWT_SECRET') || 'aidochub-dev-secret',
+        secret: getJwtSecret(this.configService),
       });
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },

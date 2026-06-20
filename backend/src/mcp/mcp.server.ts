@@ -257,7 +257,10 @@ ${toolDocs}
         return this.gitService.getHistory(args.workspaceId, args.repoId);
 
       default:
-        throw new Error(`Unknown tool: ${toolName}`);
+        throw new AppException(
+          ErrorCode.VALIDATION_FAILED,
+          HttpStatus.BAD_REQUEST,
+        );
     }
   }
 }

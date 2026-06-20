@@ -31,7 +31,7 @@ export class ShareService {
   ) {
     await this.workspaceService.checkEditor(workspaceId, userId);
 
-    const token = randomBytes(16).toString('hex');
+    const token = randomBytes(32).toString('hex');
     const passwordHash = options?.password
       ? await bcrypt.hash(options.password, 10)
       : null;
@@ -82,15 +82,18 @@ export class ShareService {
     };
   }
 
-  async getShareView(token: string, password?: string) {
+  async getShareView(token: string, password?: string, hasGrant = false) {
     const share = await this.findActiveShare(token);
     this.ensureShareLimits(share);
 
     if (share.password) {
-      if (!password) {
+      if (hasGrant) {
+        // verified via HttpOnly share grant cookie
+      } else if (password) {
+        await this.verifySharePassword(share, password);
+      } else {
         return { requiresPassword: true as const };
       }
-      await this.verifySharePassword(share, password);
     }
 
     await this.incrementVisitCount(share.id);
@@ -122,8 +125,13 @@ export class ShareService {
     };
   }
 
-  async readShareFile(token: string, filePath: string, password?: string) {
-    const share = await this.assertShareAccess(token, password);
+  async readShareFile(
+    token: string,
+    filePath: string,
+    password?: string,
+    hasGrant = false,
+  ) {
+    const share = await this.assertShareAccess(token, password, hasGrant);
     if (share.type !== 'SOURCE_ACCESS') {
       throw new AppException(
         ErrorCode.SHARE_SOURCE_ACCESS_DENIED,
@@ -145,8 +153,9 @@ export class ShareService {
     filePath: string,
     password: string | undefined,
     res: Response,
+    hasGrant = false,
   ) {
-    const share = await this.assertShareAccess(token, password);
+    const share = await this.assertShareAccess(token, password, hasGrant);
     this.assertSafeFilePath(filePath);
 
     const buffer = await this.gitService.readFileBufferAtVersion(
@@ -189,11 +198,15 @@ export class ShareService {
   private async assertShareAccess(
     token: string,
     password?: string,
+    hasGrant = false,
   ): Promise<Share> {
     const share = await this.findActiveShare(token);
     this.ensureShareLimits(share);
 
     if (share.password) {
+      if (hasGrant) {
+        return share;
+      }
       if (!password) {
         throw new AppException(
           ErrorCode.SHARE_PASSWORD_REQUIRED,

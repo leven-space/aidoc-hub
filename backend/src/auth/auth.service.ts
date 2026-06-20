@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { SystemService } from '../system/system.service';
+import { maskPhone } from '../common/utils/phone.util';
 
 export interface RegisterDto {
   phone: string;
@@ -57,9 +58,9 @@ export class AuthService {
       );
     }
 
-    if (dto.password.length < 6) {
+    if (!/^(?=.*[A-Za-z])(?=.*\d).{6,}$/.test(dto.password)) {
       throw new AppException(
-        ErrorCode.PASSWORD_TOO_SHORT,
+        ErrorCode.PASSWORD_TOO_WEAK,
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -144,7 +145,10 @@ export class AuthService {
     if (!user) {
       throw new AppException(ErrorCode.USER_NOT_FOUND, HttpStatus.UNAUTHORIZED);
     }
-    return user;
+    return {
+      ...user,
+      phone: maskPhone(user.phone),
+    };
   }
 
   private toUserResponse(user: {

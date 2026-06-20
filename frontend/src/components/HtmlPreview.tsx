@@ -98,6 +98,7 @@ export function HtmlPreview({
             key={previewUrl}
             src={previewUrl}
             title={t('preview.iframeTitle')}
+            sandbox="allow-scripts"
             onLoad={() => setLoadedPreviewUrl(previewUrl)}
             onError={() => setLoadedPreviewUrl(previewUrl)}
             style={{
@@ -117,6 +118,7 @@ export function HtmlPreview({
           <iframe
             srcDoc={content}
             title={t('preview.iframeTitle')}
+            sandbox="allow-scripts"
             style={{
               width: '100%',
               height: fullscreen ? 'calc(100vh - 120px)' : 'min(80vh, 900px)',
