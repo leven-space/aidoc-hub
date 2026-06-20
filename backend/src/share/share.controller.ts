@@ -38,6 +38,7 @@ export class ShareController {
       expiresAt?: string;
       maxVisits?: number;
       version?: string;
+      allowDownload?: boolean;
     },
   ) {
     return this.shareService.createShare(
@@ -50,6 +51,7 @@ export class ShareController {
         expiresAt: body.expiresAt ? new Date(body.expiresAt) : undefined,
         maxVisits: body.maxVisits,
         version: body.version,
+        allowDownload: body.allowDownload,
       },
     );
   }
@@ -114,6 +116,23 @@ export class ShareController {
   getView(@Param('token') token: string, @Request() req: ExpressRequest) {
     const hasGrant = hasValidShareGrant(req, this.jwtService, token);
     return this.shareService.getShareView(token, undefined, hasGrant);
+  }
+
+  @Get(':token/download')
+  async download(
+    @Param('token') token: string,
+    @Query('path') filePath: string,
+    @Request() req: ExpressRequest,
+    @Res() res: Response,
+  ) {
+    const hasGrant = hasValidShareGrant(req, this.jwtService, token);
+    return this.shareService.downloadSharePath(
+      token,
+      filePath,
+      undefined,
+      res,
+      hasGrant,
+    );
   }
 
   @Get()

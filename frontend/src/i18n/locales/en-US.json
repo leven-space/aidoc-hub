@@ -164,7 +164,9 @@
     "versionHistory": "Version History",
     "share": "Share",
     "commitNew": "Commit New Version",
-    "downloadFile": "Download File"
+    "downloadFile": "Download File",
+    "downloadFolder": "Download Folder",
+    "downloadFailed": "Download failed"
   },
   "upload": {
     "title": "Commit New Version",
@@ -228,8 +230,10 @@
     "linkGenerated": "Share link generated",
     "copyHint": "Copy the link and send it to collaborators",
     "advanced": "Advanced Settings",
-    "previewDesc": "Recipients can preview HTML online but cannot view or download source.",
+    "previewDesc": "Recipients can preview HTML online but cannot view source or collaborate.",
     "sourceDesc": "Recipients can view HTML source and submit collaborative edits.",
+    "allowDownload": "Allow download",
+    "allowDownloadHint": "When enabled, recipients can download files or folders (ZIP) but still cannot view source or submit edits.",
     "passwordRequired": "Password Required",
     "passwordHint": "This share link is password protected. Enter the password to continue.",
     "accessPassword": "Access Password",
@@ -240,7 +244,10 @@
     "htmlOnly": "This share only supports HTML preview",
     "tagSource": "Source Access",
     "tagPreview": "Preview Only",
-    "fileList": "Files"
+    "fileList": "Files",
+    "downloadFile": "Download File",
+    "downloadFolder": "Download Folder",
+    "downloadFailed": "Download failed"
   },
   "recycle": {
     "title": "Recycle Bin",
@@ -409,6 +416,7 @@
     "INVALID_OR_EXPIRED_TOKEN": "Invalid or expired access token",
     "SHARE_NOT_FOUND": "Share not found",
     "SHARE_SOURCE_ACCESS_DENIED": "Source access is not allowed for this share",
+    "SHARE_DOWNLOAD_DENIED": "Download is not allowed for this share",
     "SHARE_PASSWORD_REQUIRED": "Password required",
     "SHARE_LINK_NOT_FOUND": "Share link not found or deactivated",
     "SHARE_LINK_EXPIRED": "Share link has expired",

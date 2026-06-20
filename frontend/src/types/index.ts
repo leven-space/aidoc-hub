@@ -95,6 +95,7 @@ export interface ShareInfo {
   id: string;
   token: string;
   type: 'VIEW_ONLY' | 'SOURCE_ACCESS';
+  allowDownload: boolean;
   url: string;
   expiresAt: string | null;
   createdAt: string;
@@ -103,6 +104,7 @@ export interface ShareInfo {
 export interface ShareView {
   requiresPassword: false;
   type: 'VIEW_ONLY' | 'SOURCE_ACCESS';
+  allowDownload: boolean;
   version: string | null;
   repoName: string;
   repoDescription: string;

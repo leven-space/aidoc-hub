@@ -12,13 +12,15 @@ import {
   Typography,
   Tag,
 } from 'antd';
-import { FileOutlined, FolderOutlined, LockOutlined } from '@ant-design/icons';
+import { FileOutlined, FolderOutlined, LockOutlined, DownloadOutlined } from '@ant-design/icons';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { HtmlPreview } from '../../components/HtmlPreview';
 import { shareApi } from '../../services';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { pickDefaultPreviewFile } from '../../utils/pickPreviewFile';
+import { getDownloadFilename, isFolderPath } from '../../utils/downloadPath';
+import { triggerFileDownload } from '../../utils/triggerDownload';
 import type { ShareView } from '../../types';
 
 const { Sider, Content } = Layout;
@@ -85,6 +87,7 @@ export function SharePage() {
 
   const isHtmlFile = (fp: string) => /\.(html|htm)$/i.test(fp);
   const canViewSource = shareView?.type === 'SOURCE_ACCESS';
+  const canDownload = Boolean(shareView?.allowDownload);
 
   const loadShare = useCallback(async () => {
     if (!token) return;
@@ -164,6 +167,22 @@ export function SharePage() {
       ? shareApi.getPreviewUrl(token, selectedFile)
       : undefined;
 
+  const handleDownload = async () => {
+    if (!token || !selectedFile || !shareView) return;
+    try {
+      await triggerFileDownload(
+        shareApi.getDownloadUrl(token, selectedFile),
+        getDownloadFilename(selectedFile, shareView.files),
+      );
+    } catch (err) {
+      message.error(getApiErrorMessage(err, 'share.downloadFailed'));
+    }
+  };
+
+  const selectedIsFolder = selectedFile
+    ? isFolderPath(selectedFile, shareView?.files || [])
+    : false;
+
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: 80 }}>
@@ -236,9 +255,20 @@ export function SharePage() {
             <Typography.Text type="secondary">{shareView.repoDescription}</Typography.Text>
           )}
         </div>
-        <Tag color={shareView.type === 'SOURCE_ACCESS' ? 'blue' : 'default'}>
-          {shareView.type === 'SOURCE_ACCESS' ? t('share.tagSource') : t('share.tagPreview')}
-        </Tag>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Tag color={shareView.type === 'SOURCE_ACCESS' ? 'blue' : 'default'}>
+            {shareView.type === 'SOURCE_ACCESS' ? t('share.tagSource') : t('share.tagPreview')}
+          </Tag>
+          {canDownload && (
+            <Button
+              icon={<DownloadOutlined />}
+              disabled={!selectedFile}
+              onClick={handleDownload}
+            >
+              {selectedIsFolder ? t('share.downloadFolder') : t('share.downloadFile')}
+            </Button>
+          )}
+        </div>
       </div>
 
       {shareView.files.length === 0 ? (

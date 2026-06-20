@@ -4,6 +4,13 @@ import type { Response } from 'express';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { GitService, type RepoFileInput } from '../git/git.service';
 import { WorkspaceService } from '../workspace/workspace.service';
+import { applyPreviewResponseHeaders } from '../common/utils/preview-response.util';
+import {
+  resolveDownloadTarget,
+  toZipEntryPath,
+} from '../common/utils/download-path.util';
+import { streamZipToResponse } from '../common/utils/zip-archive.util';
+import { buildAttachmentDisposition } from '../common/utils/content-disposition.util';
 import { inferStaticContentType } from './static-content-type';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -205,7 +212,63 @@ export class RepoService {
       res.setHeader('Content-Type', contentType);
     }
     res.setHeader('Cache-Control', 'private, max-age=60');
+    applyPreviewResponseHeaders(res);
     res.send(buffer);
+  }
+
+  async downloadPath(
+    repoId: string,
+    workspaceId: string,
+    userId: string,
+    filePath: string,
+    version: string | undefined,
+    res: Response,
+  ) {
+    await this.workspaceService.checkMembership(workspaceId, userId);
+    this.assertSafeFilePath(filePath);
+
+    const allFiles = await this.gitService.listFiles(
+      workspaceId,
+      repoId,
+      version,
+    );
+    const target = resolveDownloadTarget(allFiles, filePath);
+
+    if (target.mode === 'file') {
+      const buffer = await this.gitService.readFileBufferAtVersion(
+        workspaceId,
+        repoId,
+        target.filePath,
+        version,
+      );
+      const contentType = inferStaticContentType(target.filePath);
+      if (contentType) {
+        res.setHeader('Content-Type', contentType);
+      }
+      res.setHeader(
+        'Content-Disposition',
+        buildAttachmentDisposition(target.filePath),
+      );
+      res.send(buffer);
+      return;
+    }
+
+    const entries = await Promise.all(
+      target.filePaths.map(async (relativePath) => {
+        const buffer = await this.gitService.readFileBufferAtVersion(
+          workspaceId,
+          repoId,
+          relativePath,
+          version,
+        );
+        return {
+          path: toZipEntryPath(target.folderPath, relativePath),
+          buffer,
+        };
+      }),
+    );
+
+    await streamZipToResponse(res, target.folderPath, entries);
   }
 
   private assertSafeFilePath(filePath: string) {

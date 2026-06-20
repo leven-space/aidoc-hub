@@ -4,6 +4,7 @@ import { TeamOutlined, FolderOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { fetchSearchData } from '../utils/searchCache';
+import { brandColors } from '../theme/brand';
 
 function highlightMatch(text: string, query: string) {
   if (!query) return text;
@@ -12,7 +13,7 @@ function highlightMatch(text: string, query: string) {
   return (
     <>
       {text.slice(0, idx)}
-      <span style={{ color: '#1677ff', fontWeight: 600 }}>{text.slice(idx, idx + query.length)}</span>
+      <span style={{ color: brandColors.primary, fontWeight: 600 }}>{text.slice(idx, idx + query.length)}</span>
       {text.slice(idx + query.length)}
     </>
   );
@@ -41,7 +42,7 @@ export function GlobalSearch() {
           label: (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {item.type === 'workspace' ? (
-                <TeamOutlined style={{ color: '#1677ff' }} />
+                <TeamOutlined style={{ color: brandColors.primary }} />
               ) : (
                 <FolderOutlined style={{ color: '#52c41a' }} />
               )}

@@ -13,7 +13,6 @@ import {
 import type { Response } from 'express';
 import { RepoService } from './repo.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { buildAttachmentDisposition } from '../common/utils/content-disposition.util';
 
 @Controller('workspaces/:workspaceId/repos')
 @UseGuards(JwtAuthGuard)
@@ -172,15 +171,13 @@ export class RepoController {
     @Query('version') version: string,
     @Res() res: Response,
   ) {
-    const content = await this.repoService.readFile(
+    return this.repoService.downloadPath(
       repoId,
       workspaceId,
       req.user.userId,
       filePath,
       version,
+      res,
     );
-    res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Content-Disposition', buildAttachmentDisposition(filePath));
-    res.send(content);
   }
 }

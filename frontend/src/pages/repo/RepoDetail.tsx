@@ -26,6 +26,8 @@ import { repoApi, versionApi } from '../../services';
 import { getApiErrorMessage } from '../../utils/apiError';
 import type { Repository, VersionInfo } from '../../types';
 import { pickDefaultPreviewFile } from '../../utils/pickPreviewFile';
+import { getDownloadFilename, isFolderPath } from '../../utils/downloadPath';
+import { triggerFileDownload } from '../../utils/triggerDownload';
 
 const { Sider, Content } = Layout;
 
@@ -108,25 +110,29 @@ export function RepoDetail() {
     loadPreview();
   }, [workspaceId, repoId, selectedFile, selectedVersion]);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!selectedFile || !workspaceId || !repoId) return;
-    const url = `/api/workspaces/${workspaceId}/repos/${repoId}/download?path=${encodeURIComponent(selectedFile)}${selectedVersion ? `&version=${selectedVersion}` : ''}`;
-    const token = localStorage.getItem('accessToken');
-    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.blob())
-      .then((blob) => {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = selectedFile;
-        a.click();
-      });
+    const url = repoApi.getDownloadUrl(
+      workspaceId,
+      repoId,
+      selectedFile,
+      selectedVersion,
+    );
+    const filename = getDownloadFilename(selectedFile, files);
+    try {
+      await triggerFileDownload(url, filename);
+    } catch (err) {
+      message.error(getApiErrorMessage(err, 'repo.downloadFailed'));
+    }
   };
+
+  const selectedIsFolder = selectedFile ? isFolderPath(selectedFile, files) : false;
 
   const moreMenuItems: MenuProps['items'] = [
     {
       key: 'download',
       icon: <DownloadOutlined />,
-      label: t('repo.downloadFile'),
+      label: selectedIsFolder ? t('repo.downloadFolder') : t('repo.downloadFile'),
       disabled: !selectedFile,
       onClick: handleDownload,
     },

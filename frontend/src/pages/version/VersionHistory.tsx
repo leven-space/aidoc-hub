@@ -4,6 +4,7 @@ import { ClockCircleOutlined, UserOutlined, RollbackOutlined } from '@ant-design
 import { useTranslation } from 'react-i18next';
 import { PageContainer } from '../../components/PageContainer';
 import type { VersionInfo } from '../../types';
+import { brandColors } from '../../theme/brand';
 
 interface VersionHistoryProps {
   versions: VersionInfo[];
@@ -73,8 +74,8 @@ export function VersionHistory({ versions, canRestore, onRestore, onDiff }: Vers
                 style={{
                   cursor: 'pointer',
                   border: selectedVersions.includes(v.oid)
-                    ? '1px solid #1677ff'
-                    : '1px solid #f0f0f0',
+                    ? `1px solid ${brandColors.primary}`
+                    : '1px solid #e2e8f0',
                   marginBottom: 8,
                 }}
               >

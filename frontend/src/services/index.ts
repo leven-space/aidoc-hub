@@ -107,6 +107,16 @@ export const repoApi = {
       .join('/');
     return `/api/workspaces/${workspaceId}/repos/${repoId}/preview/${encodedPath}${query ? `?${query}` : ''}`;
   },
+  getDownloadUrl: (
+    workspaceId: string,
+    repoId: string,
+    filePath: string,
+    version?: string,
+  ) => {
+    const params = new URLSearchParams({ path: filePath });
+    if (version) params.set('version', version);
+    return `/api/workspaces/${workspaceId}/repos/${repoId}/download?${params.toString()}`;
+  },
   commit: (
     workspaceId: string,
     repoId: string,
@@ -169,6 +179,7 @@ export const shareApi = {
     expiresAt?: string;
     maxVisits?: number;
     version?: string;
+    allowDownload?: boolean;
   }) => api.post<ShareInfo>('/shares', data).then((r) => r.data),
   list: (workspaceId: string, repoId: string) =>
     api.get<ShareInfo[]>('/shares', { params: { workspaceId, repoId } }).then((r) => r.data),
@@ -191,5 +202,9 @@ export const shareApi = {
       .map((segment) => encodeURIComponent(segment))
       .join('/');
     return `/api/shares/${token}/preview/${encodedPath}`;
+  },
+  getDownloadUrl: (token: string, filePath: string) => {
+    const params = new URLSearchParams({ path: filePath });
+    return `/api/shares/${token}/download?${params.toString()}`;
   },
 };

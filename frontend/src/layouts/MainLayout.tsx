@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Layout, Menu, Typography, Avatar, Dropdown, Space, Button } from 'antd';
+import { Layout, Menu, Avatar, Dropdown, Space, Button } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   HomeOutlined,
@@ -19,6 +19,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { GlobalSearch } from '../components/GlobalSearch';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { OnboardingTourHost } from '../components/OnboardingTour';
+import { AppLogo } from '../components/AppLogo';
 
 const { Header, Sider, Content } = Layout;
 
@@ -108,14 +109,18 @@ export function MainLayout() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             cursor: 'pointer',
+            padding: collapsed ? '0 8px' : '0 16px',
           }}
           onClick={() => navigate('/')}
         >
-          <Typography.Title level={4} style={{ color: '#fff', margin: 0 }}>
-            {collapsed ? t('common.appShortName') : t('common.appName')}
-          </Typography.Title>
+          <AppLogo
+            size={collapsed ? 32 : 36}
+            showText={!collapsed}
+            text={t('common.appName')}
+            textSize={16}
+          />
         </div>
         <Menu
           theme="dark"

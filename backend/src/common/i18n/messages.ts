@@ -47,6 +47,7 @@ const zhCN: Record<ErrorCodeType, string> = {
   [ErrorCode.INVALID_OR_EXPIRED_TOKEN]: '访问令牌无效或已过期',
   [ErrorCode.SHARE_NOT_FOUND]: '分享不存在',
   [ErrorCode.SHARE_SOURCE_ACCESS_DENIED]: '此分享不允许查看源码',
+  [ErrorCode.SHARE_DOWNLOAD_DENIED]: '此分享不允许下载文件',
   [ErrorCode.SHARE_PASSWORD_REQUIRED]: '需要访问密码',
   [ErrorCode.SHARE_LINK_NOT_FOUND]: '分享链接不存在或已停用',
   [ErrorCode.SHARE_LINK_EXPIRED]: '分享链接已过期',
@@ -105,6 +106,7 @@ const enUS: Record<ErrorCodeType, string> = {
   [ErrorCode.SHARE_NOT_FOUND]: 'Share not found',
   [ErrorCode.SHARE_SOURCE_ACCESS_DENIED]:
     'Source access is not allowed for this share',
+  [ErrorCode.SHARE_DOWNLOAD_DENIED]: 'Download is not allowed for this share',
   [ErrorCode.SHARE_PASSWORD_REQUIRED]: 'Password required',
   [ErrorCode.SHARE_LINK_NOT_FOUND]: 'Share link not found or deactivated',
   [ErrorCode.SHARE_LINK_EXPIRED]: 'Share link has expired',

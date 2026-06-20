@@ -1,20 +1,18 @@
 import type { ThemeConfig } from 'antd';
+import { brandColors } from './brand';
 
 export const theme: ThemeConfig = {
   token: {
-    // Primary color - Ant Design standard tech blue
-    colorPrimary: '#1677ff',
+    colorPrimary: brandColors.primary,
     colorSuccess: '#52c41a',
     colorWarning: '#faad14',
     colorError: '#ff4d4f',
-    colorInfo: '#1677ff',
+    colorInfo: brandColors.primary,
 
-    // Border radius - medium rounded corners
-    borderRadius: 6,
-    borderRadiusLG: 8,
-    borderRadiusSM: 4,
+    borderRadius: 8,
+    borderRadiusLG: 12,
+    borderRadiusSM: 6,
 
-    // Font sizes - 5 level hierarchy
     fontSize: 14,
     fontSizeSM: 12,
     fontSizeLG: 16,
@@ -25,46 +23,45 @@ export const theme: ThemeConfig = {
     fontSizeHeading4: 14,
     fontSizeHeading5: 12,
 
-    // Line height
     lineHeight: 1.5714,
     lineHeightSM: 1.6667,
     lineHeightLG: 1.5,
 
-    // Neutral color - 10-step gray scale
-    colorTextBase: '#000000',
-    colorBgBase: '#ffffff',
+    colorTextBase: '#0f172a',
+    colorBgBase: brandColors.light,
 
-    // Shadows - 3-level restrained shadow system
-    boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.06)',
-    boxShadowSecondary: '0 4px 16px 0 rgba(0, 0, 0, 0.08)',
+    boxShadow: '0 2px 8px 0 rgba(99, 102, 241, 0.08)',
+    boxShadowSecondary: '0 4px 16px 0 rgba(99, 102, 241, 0.12)',
 
-    // Spacing - 8px base grid
     padding: 16,
     paddingLG: 24,
     paddingSM: 12,
     paddingXS: 8,
 
-    // Motion
     motionDurationMid: '0.2s',
     motionDurationSlow: '0.3s',
   },
   components: {
     Layout: {
-      siderBg: '#001529',
+      siderBg: brandColors.dark,
       headerBg: '#ffffff',
-      bodyBg: '#f5f7fa',
+      bodyBg: brandColors.light,
       headerHeight: 64,
     },
     Menu: {
-      darkItemBg: '#001529',
-      darkSubMenuItemBg: '#000c17',
+      darkItemBg: brandColors.dark,
+      darkSubMenuItemBg: brandColors.darkDeep,
+      darkItemSelectedBg: brandColors.primary,
     },
     Card: {
       paddingLG: 24,
     },
     Table: {
-      headerBg: '#fafafa',
-      borderColor: '#f0f0f0',
+      headerBg: brandColors.light,
+      borderColor: '#e2e8f0',
+    },
+    Button: {
+      primaryShadow: '0 2px 0 rgba(99, 102, 241, 0.15)',
     },
   },
 };

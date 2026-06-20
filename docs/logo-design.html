@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Doc Hub — Logo Design</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #0a0e1a;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    color: #e0e6ed;
+    gap: 60px;
+    padding: 60px 20px;
+  }
+
+  /* ===== Hero Section ===== */
+  .hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+  }
+  .hero .logo-wrap {
+    filter: drop-shadow(0 0 40px rgba(56, 189, 248, 0.25));
+    animation: float 6s ease-in-out infinite;
+  }
+  .hero .brand {
+    text-align: center;
+  }
+  .hero .brand h1 {
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero .brand p {
+    margin-top: 8px;
+    font-size: 15px;
+    color: #64748b;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ===== Variants Grid ===== */
+  .variants {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+    justify-content: center;
+  }
+  .variant-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 32px 40px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .variant-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(56, 189, 248, 0.1);
+  }
+  .variant-card.light {
+    background: #ffffff;
+    border-color: #e2e8f0;
+  }
+  .variant-card .label {
+    font-size: 12px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+  .variant-card.light .label { color: #94a3b8; }
+
+  /* ===== Color Palette ===== */
+  .palette {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .swatch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .swatch .color-box {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    border: 2px solid rgba(255,255,255,0.1);
+  }
+  .swatch span {
+    font-size: 11px;
+    color: #64748b;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  .section-title {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: #475569;
+    margin-bottom: -20px;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* ===== Icon-only sizes ===== */
+  .sizes { display: flex; gap: 32px; align-items: flex-end; }
+  .size-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .size-item span { font-size: 11px; color: #475569; }
+</style>
+</head>
+<body>
+
+<!-- ============================== -->
+<!--         HERO: Main Logo      -->
+<!-- ============================== -->
+<div class="hero">
+  <div class="logo-wrap">
+    <svg width="140" height="140" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="grad-main" x1="0" y1="0" x2="140" y2="140" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#38bdf8"/>
+          <stop offset="50%" stop-color="#818cf8"/>
+          <stop offset="100%" stop-color="#c084fc"/>
+        </linearGradient>
+        <linearGradient id="grad-glow" x1="30" y1="20" x2="110" y2="120" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="#c084fc" stop-opacity="0.05"/>
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- Background rounded square -->
+      <rect x="4" y="4" width="132" height="132" rx="32" fill="#0f172a" stroke="url(#grad-main)" stroke-width="2"/>
+      <rect x="4" y="4" width="132" height="132" rx="32" fill="url(#grad-glow)"/>
+
+      <!-- Document page shape -->
+      <g filter="url(#glow)">
+        <path d="M44 28h36l20 20v64a8 8 0 0 1-8 8H44a8 8 0 0 1-8-8V36a8 8 0 0 1 8-8z"
+              fill="none" stroke="url(#grad-main)" stroke-width="2.5" stroke-linejoin="round"/>
+        <!-- Folded corner -->
+        <path d="M80 28v16a4 4 0 0 0 4 4h16" fill="none" stroke="url(#grad-main)" stroke-width="2.5" stroke-linejoin="round"/>
+      </g>
+
+      <!-- AI neural network nodes inside document -->
+      <g filter="url(#glow)">
+        <!-- Central hub node -->
+        <circle cx="70" cy="78" r="8" fill="url(#grad-main)" opacity="0.9"/>
+        <circle cx="70" cy="78" r="4" fill="#0f172a"/>
+        <circle cx="70" cy="78" r="2.5" fill="#38bdf8"/>
+
+        <!-- Top node -->
+        <circle cx="70" cy="56" r="4" fill="#818cf8" opacity="0.8"/>
+        <line x1="70" y1="60" x2="70" y2="70" stroke="#818cf8" stroke-width="1.5" opacity="0.6"/>
+
+        <!-- Bottom-left node -->
+        <circle cx="52" cy="96" r="4" fill="#c084fc" opacity="0.8"/>
+        <line x1="55" y1="93.5" x2="64" y2="83" stroke="#c084fc" stroke-width="1.5" opacity="0.6"/>
+
+        <!-- Bottom-right node -->
+        <circle cx="88" cy="96" r="4" fill="#38bdf8" opacity="0.8"/>
+        <line x1="85" y1="93.5" x2="76" y2="83" stroke="#38bdf8" stroke-width="1.5" opacity="0.6"/>
+
+        <!-- Cross connections (subtle) -->
+        <line x1="56" y1="94" x2="67" y2="58" stroke="#818cf8" stroke-width="0.8" opacity="0.25"/>
+        <line x1="84" y1="94" x2="73" y2="58" stroke="#38bdf8" stroke-width="0.8" opacity="0.25"/>
+        <line x1="56" y1="96" x2="84" y2="96" stroke="#c084fc" stroke-width="0.8" opacity="0.2"/>
+
+        <!-- Git branch indicator (version control) -->
+        <circle cx="52" cy="68" r="2.5" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity="0.5"/>
+        <line x1="54.5" y1="68" x2="62" y2="74" stroke="#38bdf8" stroke-width="1.2" opacity="0.4"/>
+
+        <circle cx="88" cy="68" r="2.5" fill="none" stroke="#c084fc" stroke-width="1.5" opacity="0.5"/>
+        <line x1="85.5" y1="68" x2="78" y2="74" stroke="#c084fc" stroke-width="1.2" opacity="0.4"/>
+      </g>
+    </svg>
+  </div>
+  <div class="brand">
+    <h1>AI Doc Hub</h1>
+    <p>HTML Asset Version Control &amp; Collaboration</p>
+  </div>
+</div>
+
+<!-- ============================== -->
+<!--         SIZE VARIANTS          -->
+<!-- ============================== -->
+<p class="section-title">Icon Sizes</p>
+<div class="sizes">
+  <div class="size-item">
+    <svg width="32" height="32" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="4" y="4" width="132" height="132" rx="32" fill="#0f172a" stroke="url(#grad-main)" stroke-width="2"/>
+      <rect x="4" y="4" width="132" height="132" rx="32" fill="url(#grad-glow)"/>
+      <path d="M44 28h36l20 20v64a8 8 0 0 1-8 8H44a8 8 0 0 1-8-8V36a8 8 0 0 1 8-8z" fill="none" stroke="url(#grad-main)" stroke-width="3"/>
+      <path d="M80 28v16a4 4 0 0 0 4 4h16" fill="none" stroke="url(#grad-main)" stroke-width="3"/>
+      <circle cx="70" cy="78" r="8" fill="url(#grad-main)" opacity="0.9"/>
+      <circle cx="70" cy="78" r="3" fill="#38bdf8"/>
+      <circle cx="70" cy="56" r="4" fill="#818cf8" opacity="0.7"/>
+      <circle cx="52" cy="96" r="4" fill="#c084fc" opacity="0.7"/>
+      <circle cx="88" cy="96" r="4" fill="#38bdf8" opacity="0.7"/>
+    </svg>
+    <span>32px</span>
+  </div>
+  <div class="size-item">
+    <svg width="48" height="48" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="4" y="4" width="132" height="132" rx="32" fill="#0f172a" stroke="url(#grad-main)" stroke-width="2"/>
+      <rect x="4" y="4" width="132" height="132" rx="32" fill="url(#grad-glow)"/>
+      <path d="M44 28h36l20 20v64a8 8 0 0 1-8 8H44a8 8 0 0 1-8-8V36a8 8 0 0 1 8-8z" fill="none" stroke="url(#grad-main)" stroke-width="2.5"/>
+      <path d="M80 28v16a4 4 0 0 0 4 4h16" fill="none" stroke="url(#grad-main)" stroke-width="2.5"/>
+      <circle cx="70" cy="78" r="8" fill="url(#grad-main)" opacity="0.9"/>
+      <circle cx="70" cy="78" r="4" fill="#0f172a"/>
+      <circle cx="70" cy="78" r="2.5" fill="#38bdf8"/>
+      <circle cx="70" cy="56" r="4" fill="#818cf8" opacity="0.7"/>
+      <circle cx="52" cy="96" r="4" fill="#c084fc" opacity="0.7"/>
+      <circle cx="88" cy="96" r="4" fill="#38bdf8" opacity="0.7"/>
+      <line x1="70" y1="60" x2="70" y2="70" stroke="#818cf8" stroke-width="1.5" opacity="0.6"/>
+      <line x1="55" y1="93.5" x2="64" y2="83" stroke="#c084fc" stroke-width="1.5" opacity="0.6"/>
+      <line x1="85" y1="93.5" x2="76" y2="83" stroke="#38bdf8" stroke-width="1.5" opacity="0.6"/>
+    </svg>
+    <span>48px</span>
+  </div>
+  <div class="size-item">
+    <svg width="64" height="64" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="4" y="4" width="132" height="132" rx="32" fill="#0f172a" stroke="url(#grad-main)" stroke-width="2"/>
+      <rect x="4" y="4" width="132" height="132" rx="32" fill="url(#grad-glow)"/>
+      <path d="M44 28h36l20 20v64a8 8 0 0 1-8 8H44a8 8 0 0 1-8-8V36a8 8 0 0 1 8-8z" fill="none" stroke="url(#grad-main)" stroke-width="2.5"/>
+      <path d="M80 28v16a4 4 0 0 0 4 4h16" fill="none" stroke="url(#grad-main)" stroke-width="2.5"/>
+      <circle cx="70" cy="78" r="8" fill="url(#grad-main)" opacity="0.9"/>
+      <circle cx="70" cy="78" r="4" fill="#0f172a"/>
+      <circle cx="70" cy="78" r="2.5" fill="#38bdf8"/>
+      <circle cx="70" cy="56" r="4" fill="#818cf8" opacity="0.8"/>
+      <circle cx="52" cy="96" r="4" fill="#c084fc" opacity="0.8"/>
+      <circle cx="88" cy="96" r="4" fill="#38bdf8" opacity="0.8"/>
+      <line x1="70" y1="60" x2="70" y2="70" stroke="#818cf8" stroke-width="1.5" opacity="0.6"/>
+      <line x1="55" y1="93.5" x2="64" y2="83" stroke="#c084fc" stroke-width="1.5" opacity="0.6"/>
+      <line x1="85" y1="93.5" x2="76" y2="83" stroke="#38bdf8" stroke-width="1.5" opacity="0.6"/>
+    </svg>
+    <span>64px</span>
+  </div>
+  <div class="size-item">
+    <svg width="96" height="96" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="4" y="4" width="132" height="132" rx="32" fill="#0f172a" stroke="url(#grad-main)" stroke-width="2"/>
+      <rect x="4" y="4" width="132" height="132" rx="32" fill="url(#grad-glow)"/>
+      <g filter="url(#glow)">
+        <path d="M44 28h36l20 20v64a8 8 0 0 1-8 8H44a8 8 0 0 1-8-8V36a8 8 0 0 1 8-8z" fill="none" stroke="url(#grad-main)" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M80 28v16a4 4 0 0 0 4 4h16" fill="none" stroke="url(#grad-main)" stroke-width="2.5" stroke-linejoin="round"/>
+      </g>
+      <circle cx="70" cy="78" r="8" fill="url(#grad-main)" opacity="0.9"/>
+      <circle cx="70" cy="78" r="4" fill="#0f172a"/>
+      <circle cx="70" cy="78" r="2.5" fill="#38bdf8"/>
+      <circle cx="70" cy="56" r="4" fill="#818cf8" opacity="0.8"/>
+      <circle cx="52" cy="96" r="4" fill="#c084fc" opacity="0.8"/>
+      <circle cx="88" cy="96" r="4" fill="#38bdf8" opacity="0.8"/>
+      <line x1="70" y1="60" x2="70" y2="70" stroke="#818cf8" stroke-width="1.5" opacity="0.6"/>
+      <line x1="55" y1="93.5" x2="64" y2="83" stroke="#c084fc" stroke-width="1.5" opacity="0.6"/>
+      <line x1="85" y1="93.5" x2="76" y2="83" stroke="#38bdf8" stroke-width="1.5" opacity="0.6"/>
+      <line x1="56" y1="94" x2="67" y2="58" stroke="#818cf8" stroke-width="0.8" opacity="0.25"/>
+      <line x1="84" y1="94" x2="73" y2="58" stroke="#38bdf8" stroke-width="0.8" opacity="0.25"/>
+    </svg>
+    <span>96px</span>
+  </div>
+</div>
+
+<!-- ============================== -->
+<!--       LIGHT BACKGROUND         -->
+<!-- ============================== -->
+<p class="section-title">Light Background</p>
+<div class="variants">
+  <div class="variant-card light">
+    <svg width="96" height="96" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="grad-main-l" x1="0" y1="0" x2="140" y2="140" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#0ea5e9"/>
+          <stop offset="50%" stop-color="#6366f1"/>
+          <stop offset="100%" stop-color="#a855f7"/>
+        </linearGradient>
+      </defs>
+      <rect x="4" y="4" width="132" height="132" rx="32" fill="#f8fafc" stroke="url(#grad-main-l)" stroke-width="2.5"/>
+      <path d="M44 28h36l20 20v64a8 8 0 0 1-8 8H44a8 8 0 0 1-8-8V36a8 8 0 0 1 8-8z" fill="none" stroke="url(#grad-main-l)" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M80 28v16a4 4 0 0 0 4 4h16" fill="none" stroke="url(#grad-main-l)" stroke-width="2.5" stroke-linejoin="round"/>
+      <circle cx="70" cy="78" r="8" fill="url(#grad-main-l)" opacity="0.85"/>
+      <circle cx="70" cy="78" r="4" fill="#f8fafc"/>
+      <circle cx="70" cy="78" r="2.5" fill="#0ea5e9"/>
+      <circle cx="70" cy="56" r="4" fill="#6366f1" opacity="0.8"/>
+      <circle cx="52" cy="96" r="4" fill="#a855f7" opacity="0.8"/>
+      <circle cx="88" cy="96" r="4" fill="#0ea5e9" opacity="0.8"/>
+      <line x1="70" y1="60" x2="70" y2="70" stroke="#6366f1" stroke-width="1.5" opacity="0.5"/>
+      <line x1="55" y1="93.5" x2="64" y2="83" stroke="#a855f7" stroke-width="1.5" opacity="0.5"/>
+      <line x1="85" y1="93.5" x2="76" y2="83" stroke="#0ea5e9" stroke-width="1.5" opacity="0.5"/>
+    </svg>
+    <span class="label">Light Mode</span>
+  </div>
+
+  <div class="variant-card">
+    <svg width="96" height="96" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="grad-mono" x1="0" y1="0" x2="140" y2="140" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#e2e8f0"/>
+          <stop offset="100%" stop-color="#94a3b8"/>
+        </linearGradient>
+      </defs>
+      <rect x="4" y="4" width="132" height="132" rx="32" fill="#1e293b" stroke="url(#grad-mono)" stroke-width="2"/>
+      <path d="M44 28h36l20 20v64a8 8 0 0 1-8 8H44a8 8 0 0 1-8-8V36a8 8 0 0 1 8-8z" fill="none" stroke="url(#grad-mono)" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M80 28v16a4 4 0 0 0 4 4h16" fill="none" stroke="url(#grad-mono)" stroke-width="2.5" stroke-linejoin="round"/>
+      <circle cx="70" cy="78" r="8" fill="url(#grad-mono)" opacity="0.7"/>
+      <circle cx="70" cy="78" r="4" fill="#1e293b"/>
+      <circle cx="70" cy="78" r="2.5" fill="#e2e8f0"/>
+      <circle cx="70" cy="56" r="4" fill="#94a3b8" opacity="0.7"/>
+      <circle cx="52" cy="96" r="4" fill="#94a3b8" opacity="0.7"/>
+      <circle cx="88" cy="96" r="4" fill="#94a3b8" opacity="0.7"/>
+      <line x1="70" y1="60" x2="70" y2="70" stroke="#94a3b8" stroke-width="1.5" opacity="0.4"/>
+      <line x1="55" y1="93.5" x2="64" y2="83" stroke="#94a3b8" stroke-width="1.5" opacity="0.4"/>
+      <line x1="85" y1="93.5" x2="76" y2="83" stroke="#94a3b8" stroke-width="1.5" opacity="0.4"/>
+    </svg>
+    <span class="label">Monochrome</span>
+  </div>
+
+  <div class="variant-card">
+    <svg width="96" height="96" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="grad-flat" x1="0" y1="0" x2="140" y2="140" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#38bdf8"/>
+          <stop offset="50%" stop-color="#818cf8"/>
+          <stop offset="100%" stop-color="#c084fc"/>
+        </linearGradient>
+      </defs>
+      <rect x="4" y="4" width="132" height="132" rx="32" fill="url(#grad-flat)"/>
+      <path d="M44 28h36l20 20v64a8 8 0 0 1-8 8H44a8 8 0 0 1-8-8V36a8 8 0 0 1 8-8z" fill="none" stroke="#ffffff" stroke-width="2.8" stroke-linejoin="round" opacity="0.95"/>
+      <path d="M80 28v16a4 4 0 0 0 4 4h16" fill="none" stroke="#ffffff" stroke-width="2.8" stroke-linejoin="round" opacity="0.95"/>
+      <circle cx="70" cy="78" r="8" fill="rgba(255,255,255,0.25)"/>
+      <circle cx="70" cy="78" r="4" fill="rgba(255,255,255,0.6)"/>
+      <circle cx="70" cy="78" r="2.5" fill="#ffffff"/>
+      <circle cx="70" cy="56" r="4" fill="#ffffff" opacity="0.7"/>
+      <circle cx="52" cy="96" r="4" fill="#ffffff" opacity="0.7"/>
+      <circle cx="88" cy="96" r="4" fill="#ffffff" opacity="0.7"/>
+      <line x1="70" y1="60" x2="70" y2="70" stroke="#ffffff" stroke-width="1.5" opacity="0.5"/>
+      <line x1="55" y1="93.5" x2="64" y2="83" stroke="#ffffff" stroke-width="1.5" opacity="0.5"/>
+      <line x1="85" y1="93.5" x2="76" y2="83" stroke="#ffffff" stroke-width="1.5" opacity="0.5"/>
+    </svg>
+    <span class="label">Gradient Fill</span>
+  </div>
+</div>
+
+<!-- ============================== -->
+<!--         COLOR PALETTE          -->
+<!-- ============================== -->
+<p class="section-title">Color Palette</p>
+<div class="palette">
+  <div class="swatch">
+    <div class="color-box" style="background:#38bdf8"></div>
+    <span>#38BDF8</span>
+  </div>
+  <div class="swatch">
+    <div class="color-box" style="background:#818cf8"></div>
+    <span>#818CF8</span>
+  </div>
+  <div class="swatch">
+    <div class="color-box" style="background:#c084fc"></div>
+    <span>#C084FC</span>
+  </div>
+  <div class="swatch">
+    <div class="color-box" style="background:#0f172a"></div>
+    <span>#0F172A</span>
+  </div>
+  <div class="swatch">
+    <div class="color-box" style="background:#f8fafc; border-color: #cbd5e1"></div>
+    <span>#F8FAFC</span>
+  </div>
+</div>
+
+<!-- ============================== -->
+<!--        FAVICON-STYLE SVG       -->
+<!-- ============================== -->
+<p class="section-title">Favicon / App Icon (copy-paste ready)</p>
+<div class="variant-card">
+  <svg id="favicon-svg" width="48" height="48" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg" style="cursor:pointer">
+    <rect x="4" y="4" width="132" height="132" rx="32" fill="#0f172a" stroke="url(#grad-main)" stroke-width="2"/>
+    <rect x="4" y="4" width="132" height="132" rx="32" fill="url(#grad-glow)"/>
+    <path d="M44 28h36l20 20v64a8 8 0 0 1-8 8H44a8 8 0 0 1-8-8V36a8 8 0 0 1 8-8z" fill="none" stroke="url(#grad-main)" stroke-width="3"/>
+    <path d="M80 28v16a4 4 0 0 0 4 4h16" fill="none" stroke="url(#grad-main)" stroke-width="3"/>
+    <circle cx="70" cy="78" r="8" fill="url(#grad-main)" opacity="0.9"/>
+    <circle cx="70" cy="78" r="3" fill="#38bdf8"/>
+    <circle cx="70" cy="56" r="4" fill="#818cf8" opacity="0.7"/>
+    <circle cx="52" cy="96" r="4" fill="#c084fc" opacity="0.7"/>
+    <circle cx="88" cy="96" r="4" fill="#38bdf8" opacity="0.7"/>
+  </svg>
+  <span class="label" id="copy-hint">Click to copy SVG code</span>
+</div>
+
+<script>
+  document.getElementById('favicon-svg').addEventListener('click', function() {
+    const svgCode = this.outerHTML.replace(/ id="favicon-svg"/, '');
+    navigator.clipboard.writeText(svgCode).then(() => {
+      document.getElementById('copy-hint').textContent = 'Copied!';
+      setTimeout(() => { document.getElementById('copy-hint').textContent = 'Click to copy SVG code'; }, 2000);
+    });
+  });
+</script>
+</body>
+</html>

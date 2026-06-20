@@ -164,7 +164,9 @@
     "versionHistory": "版本历史",
     "share": "分享",
     "commitNew": "提交新版本",
-    "downloadFile": "下载文件"
+    "downloadFile": "下载文件",
+    "downloadFolder": "下载文件夹",
+    "downloadFailed": "下载失败"
   },
   "upload": {
     "title": "提交新版本",
@@ -228,8 +230,10 @@
     "linkGenerated": "分享链接已生成",
     "copyHint": "请复制链接发送给协作者",
     "advanced": "高级设置",
-    "previewDesc": "接收者只能在线预览 HTML 内容，无法查看或下载源码。",
+    "previewDesc": "接收者只能在线预览 HTML 内容，无法查看源码或协同编辑。",
     "sourceDesc": "接收者可以查看 HTML 源码并进行协同编辑提交。",
+    "allowDownload": "允许下载",
+    "allowDownloadHint": "开启后，接收者可下载文件或文件夹（ZIP），但仍无法查看源码或提交编辑。",
     "passwordRequired": "需要访问密码",
     "passwordHint": "此分享链接已设置密码，请输入后继续查看。",
     "accessPassword": "访问密码",
@@ -240,7 +244,10 @@
     "htmlOnly": "当前分享仅支持 HTML 文件预览",
     "tagSource": "可查看源码",
     "tagPreview": "仅预览",
-    "fileList": "文件列表"
+    "fileList": "文件列表",
+    "downloadFile": "下载文件",
+    "downloadFolder": "下载文件夹",
+    "downloadFailed": "下载失败"
   },
   "recycle": {
     "title": "回收站",
@@ -409,6 +416,7 @@
     "INVALID_OR_EXPIRED_TOKEN": "访问令牌无效或已过期",
     "SHARE_NOT_FOUND": "分享不存在",
     "SHARE_SOURCE_ACCESS_DENIED": "此分享不允许查看源码",
+    "SHARE_DOWNLOAD_DENIED": "此分享不允许下载文件",
     "SHARE_PASSWORD_REQUIRED": "需要访问密码",
     "SHARE_LINK_NOT_FOUND": "分享链接不存在或已停用",
     "SHARE_LINK_EXPIRED": "分享链接已过期",

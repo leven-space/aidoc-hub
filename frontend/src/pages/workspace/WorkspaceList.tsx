@@ -7,6 +7,7 @@ import { PageContainer } from '../../components/PageContainer';
 import { workspaceApi } from '../../services';
 import { getApiErrorMessage } from '../../utils/apiError';
 import type { Workspace } from '../../types';
+import { brandColors } from '../../theme/brand';
 
 export function WorkspaceList() {
   const { t } = useTranslation();
@@ -91,7 +92,7 @@ export function WorkspaceList() {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                    {isTeam ? <TeamOutlined style={{ fontSize: 20, color: '#1677ff' }} /> : <UserOutlined style={{ fontSize: 20, color: '#52c41a' }} />}
+                    {isTeam ? <TeamOutlined style={{ fontSize: 20, color: brandColors.primary }} /> : <UserOutlined style={{ fontSize: 20, color: '#52c41a' }} />}
                     <Tag color={isTeam ? 'blue' : 'green'}>{isTeam ? t('workspace.teamSpace') : t('workspace.personalSpace')}</Tag>
                   </div>
                   <Card.Meta

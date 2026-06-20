@@ -118,6 +118,7 @@ model Share {
   repositoryId String
   workspaceId  String
   type         ShareType
+  allowDownload Boolean   @default(false)
   token        String     @unique
   password     String?
   expiresAt    DateTime?

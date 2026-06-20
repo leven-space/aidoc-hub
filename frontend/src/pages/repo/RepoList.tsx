@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { repoApi } from '../../services';
 import { getApiErrorMessage } from '../../utils/apiError';
 import type { Repository } from '../../types';
+import { brandColors } from '../../theme/brand';
 
 interface RepoListProps {
   workspaceId: string;
@@ -141,7 +142,7 @@ export function RepoList({ workspaceId, isAdmin }: RepoListProps) {
                 }
               >
                 <Card.Meta
-                  avatar={<FolderOpenOutlined style={{ fontSize: 24, color: '#1677ff' }} />}
+                  avatar={<FolderOpenOutlined style={{ fontSize: 24, color: brandColors.primary }} />}
                   title={repo.name}
                   description={
                     <div>

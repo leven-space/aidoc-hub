@@ -15,6 +15,8 @@ import { useTranslation } from 'react-i18next';
 import { setupApi } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
 import { getApiErrorMessage } from '../../utils/apiError';
+import { AppLogo } from '../../components/AppLogo';
+import { authBackgroundGradient } from '../../theme/brand';
 
 type SetupFormValues = {
   phone: string;
@@ -60,11 +62,14 @@ export function SetupPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #f0f5ff 0%, #e6f4ff 100%)',
+        background: authBackgroundGradient,
         padding: 24,
       }}
     >
-      <Card style={{ width: 520, boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
+      <Card style={{ width: 520, boxShadow: '0 4px 16px rgba(99, 102, 241, 0.12)' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+          <AppLogo size={48} showText text={t('common.appName')} textSize={22} />
+        </div>
         <Typography.Title level={3} style={{ textAlign: 'center', marginBottom: 8 }}>
           {t('setup.welcome')}
         </Typography.Title>

@@ -7,6 +7,13 @@ import type { Share } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { WorkspaceService } from '../workspace/workspace.service';
 import { GitService } from '../git/git.service';
+import { applyPreviewResponseHeaders } from '../common/utils/preview-response.util';
+import {
+  resolveDownloadTarget,
+  toZipEntryPath,
+} from '../common/utils/download-path.util';
+import { streamZipToResponse } from '../common/utils/zip-archive.util';
+import { buildAttachmentDisposition } from '../common/utils/content-disposition.util';
 import { inferStaticContentType } from '../repo/static-content-type';
 
 @Injectable()
@@ -27,6 +34,7 @@ export class ShareService {
       expiresAt?: Date;
       maxVisits?: number;
       version?: string;
+      allowDownload?: boolean;
     },
   ) {
     await this.workspaceService.checkEditor(workspaceId, userId);
@@ -35,12 +43,15 @@ export class ShareService {
     const passwordHash = options?.password
       ? await bcrypt.hash(options.password, 10)
       : null;
+    const allowDownload =
+      type === 'SOURCE_ACCESS' ? true : Boolean(options?.allowDownload);
 
     const share = await this.prisma.share.create({
       data: {
         repositoryId: repoId,
         workspaceId,
         type,
+        allowDownload,
         token,
         password: passwordHash,
         expiresAt: options?.expiresAt || null,
@@ -54,6 +65,7 @@ export class ShareService {
       id: share.id,
       token: share.token,
       type: share.type,
+      allowDownload: share.allowDownload,
       url: `/share/${share.token}`,
       expiresAt: share.expiresAt,
       createdAt: share.createdAt,
@@ -118,6 +130,7 @@ export class ShareService {
     return {
       requiresPassword: false as const,
       type: share.type,
+      allowDownload: this.canDownload(share),
       version: share.version,
       repoName: repo.name,
       repoDescription: repo.description,
@@ -170,7 +183,63 @@ export class ShareService {
       res.setHeader('Content-Type', contentType);
     }
     res.setHeader('Cache-Control', 'private, max-age=60');
+    applyPreviewResponseHeaders(res);
     res.send(buffer);
+  }
+
+  async downloadSharePath(
+    token: string,
+    filePath: string,
+    password: string | undefined,
+    res: Response,
+    hasGrant = false,
+  ) {
+    const share = await this.assertShareAccess(token, password, hasGrant);
+    this.assertShareDownload(share);
+    this.assertSafeFilePath(filePath);
+
+    const allFiles = await this.gitService.listFiles(
+      share.workspaceId,
+      share.repositoryId,
+      share.version || undefined,
+    );
+    const target = resolveDownloadTarget(allFiles, filePath);
+
+    if (target.mode === 'file') {
+      const buffer = await this.gitService.readFileBufferAtVersion(
+        share.workspaceId,
+        share.repositoryId,
+        target.filePath,
+        share.version || undefined,
+      );
+      const contentType = inferStaticContentType(target.filePath);
+      if (contentType) {
+        res.setHeader('Content-Type', contentType);
+      }
+      res.setHeader(
+        'Content-Disposition',
+        buildAttachmentDisposition(target.filePath),
+      );
+      res.send(buffer);
+      return;
+    }
+
+    const entries = await Promise.all(
+      target.filePaths.map(async (relativePath) => {
+        const buffer = await this.gitService.readFileBufferAtVersion(
+          share.workspaceId,
+          share.repositoryId,
+          relativePath,
+          share.version || undefined,
+        );
+        return {
+          path: toZipEntryPath(target.folderPath, relativePath),
+          buffer,
+        };
+      }),
+    );
+
+    await streamZipToResponse(res, target.folderPath, entries);
   }
 
   async listShares(workspaceId: string, repoId: string, userId: string) {
@@ -268,6 +337,19 @@ export class ShareService {
       where: { id: shareId },
       data: { visitCount: { increment: 1 } },
     });
+  }
+
+  private canDownload(share: Share) {
+    return share.type === 'SOURCE_ACCESS' || share.allowDownload;
+  }
+
+  private assertShareDownload(share: Share) {
+    if (!this.canDownload(share)) {
+      throw new AppException(
+        ErrorCode.SHARE_DOWNLOAD_DENIED,
+        HttpStatus.FORBIDDEN,
+      );
+    }
   }
 
   private assertSafeFilePath(filePath: string) {

@@ -11,6 +11,7 @@ import {
   message,
   Alert,
   Typography,
+  Switch,
 } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -31,6 +32,7 @@ export function ShareModal({ open, onClose, workspaceId, repoId, versions }: Sha
   const [loading, setLoading] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
   const [shareType, setShareType] = useState<'VIEW_ONLY' | 'SOURCE_ACCESS'>('VIEW_ONLY');
+  const [allowDownload, setAllowDownload] = useState(false);
   const [form] = Form.useForm();
 
   const handleCreate = async () => {
@@ -45,6 +47,7 @@ export function ShareModal({ open, onClose, workspaceId, repoId, versions }: Sha
         expiresAt: values.expiresAt?.toISOString?.(),
         maxVisits: values.maxVisits,
         version: values.version,
+        allowDownload: shareType === 'VIEW_ONLY' ? allowDownload : true,
       });
       const fullUrl = `${window.location.origin}${result.url}`;
       setShareUrl(fullUrl);
@@ -63,6 +66,7 @@ export function ShareModal({ open, onClose, workspaceId, repoId, versions }: Sha
 
   const handleClose = () => {
     setShareUrl('');
+    setAllowDownload(false);
     form.resetFields();
     onClose();
   };
@@ -99,13 +103,30 @@ export function ShareModal({ open, onClose, workspaceId, repoId, versions }: Sha
         <>
           <Tabs
             activeKey={shareType}
-            onChange={(k) => setShareType(k as 'VIEW_ONLY' | 'SOURCE_ACCESS')}
+            onChange={(k) => {
+              const nextType = k as 'VIEW_ONLY' | 'SOURCE_ACCESS';
+              setShareType(nextType);
+              if (nextType === 'SOURCE_ACCESS') {
+                setAllowDownload(true);
+              }
+            }}
             items={[
               { key: 'VIEW_ONLY', label: t('share.tabPreview') },
               { key: 'SOURCE_ACCESS', label: t('share.tabSource') },
             ]}
           />
           <Typography.Paragraph type="secondary">{typeDescription}</Typography.Paragraph>
+          {shareType === 'VIEW_ONLY' && (
+            <Form.Item
+              label={t('share.allowDownload')}
+              style={{ marginBottom: 16 }}
+            >
+              <Switch checked={allowDownload} onChange={setAllowDownload} />
+              <Typography.Paragraph type="secondary" style={{ marginTop: 8, marginBottom: 0 }}>
+                {t('share.allowDownloadHint')}
+              </Typography.Paragraph>
+            </Form.Item>
+          )}
           <Form form={form} layout="vertical">
             <Collapse
               ghost
