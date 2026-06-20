@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Tabs, Spin, message, Modal } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageContainer } from '../../components/PageContainer';
 import { workspaceApi } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
+import { getApiErrorMessage } from '../../utils/apiError';
 import { RepoList } from '../repo/RepoList';
 import { MemberManage } from './MemberManage';
 import type { Workspace } from '../../types';
 
 export function WorkspaceDetail() {
+  const { t } = useTranslation();
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,7 +25,7 @@ export function WorkspaceDetail() {
       const data = await workspaceApi.get(workspaceId);
       setWorkspace(data);
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '加载失败');
+      message.error(getApiErrorMessage(err, 'common.loadFailed'));
       navigate('/');
     } finally {
       setLoading(false);
@@ -46,12 +49,12 @@ export function WorkspaceDetail() {
 
   const handleDelete = () => {
     Modal.confirm({
-      title: '确认删除空间',
-      content: '删除后空间将移入回收站，30 天内可恢复。确认继续？',
+      title: t('workspace.deleteConfirmTitle'),
+      content: t('workspace.deleteConfirmContent'),
       okType: 'danger',
       onOk: async () => {
         await workspaceApi.delete(workspaceId);
-        message.success('空间已移入回收站');
+        message.success(t('workspace.deleteSuccess'));
         navigate('/');
       },
     });
@@ -62,13 +65,13 @@ export function WorkspaceDetail() {
       title={workspace.name}
       subtitle={workspace.description}
       breadcrumb={[
-        { title: '工作空间', href: '/' },
+        { title: t('workspace.breadcrumb'), href: '/' },
         { title: workspace.name },
       ]}
       extra={
         isAdmin ? (
           <a onClick={handleDelete} style={{ color: '#ff4d4f' }}>
-            删除空间
+            {t('workspace.deleteSpace')}
           </a>
         ) : undefined
       }
@@ -77,14 +80,14 @@ export function WorkspaceDetail() {
         items={[
           {
             key: 'repos',
-            label: '仓库列表',
+            label: t('workspace.tabsRepos'),
             children: (
               <RepoList workspaceId={workspaceId} isAdmin={isAdmin} />
             ),
           },
           {
             key: 'members',
-            label: '成员管理',
+            label: t('workspace.tabsMembers'),
             children: <MemberManage workspaceId={workspaceId} isAdmin={!!isAdmin} />,
           },
         ]}

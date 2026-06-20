@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Tabs, Table, Button, Modal, message, Empty, Spin, Tag } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { PageContainer } from '../../components/PageContainer';
 import { workspaceApi, repoApi } from '../../services';
+import { getApiErrorMessage } from '../../utils/apiError';
 import type { Workspace, Repository } from '../../types';
 
 export function RecyclePage() {
+  const { t } = useTranslation();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [repos, setRepos] = useState<(Repository & { workspaceName?: string })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +32,7 @@ export function RecyclePage() {
       }
       setRepos(allRepos);
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '加载失败');
+      message.error(getApiErrorMessage(err, 'common.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -44,25 +47,25 @@ export function RecyclePage() {
   };
 
   const wsColumns = [
-    { title: '空间名称', dataIndex: 'name', key: 'name' },
+    { title: t('recycle.columnSpaceName'), dataIndex: 'name', key: 'name' },
     {
-      title: '删除时间',
+      title: t('recycle.columnDeletedAt'),
       dataIndex: 'deletedAt',
       key: 'deletedAt',
       render: (v: string) => (v ? new Date(v).toLocaleString() : '-'),
     },
     {
-      title: '剩余天数',
+      title: t('recycle.columnRemaining'),
       key: 'remaining',
       render: (_: unknown, record: Workspace) => {
         if (!record.deletedAt) return '-';
         const deleted = new Date(record.deletedAt as unknown as string);
         const remaining = 30 - Math.floor((Date.now() - deleted.getTime()) / 86400000);
-        return <Tag color={remaining <= 7 ? 'red' : 'default'}>{remaining} 天</Tag>;
+        return <Tag color={remaining <= 7 ? 'red' : 'default'}>{t('common.days', { count: remaining })}</Tag>;
       },
     },
     {
-      title: '操作',
+      title: t('recycle.columnAction'),
       key: 'action',
       render: (_: unknown, record: Workspace) => (
         <>
@@ -70,14 +73,14 @@ export function RecyclePage() {
             type="link"
             size="small"
             onClick={() =>
-              confirmAction('确认恢复', `恢复空间「${record.name}」？`, async () => {
+              confirmAction(t('recycle.restoreConfirmTitle'), t('recycle.restoreWorkspaceContent', { name: record.name }), async () => {
                 await workspaceApi.restore(record.id);
-                message.success('已恢复');
+                message.success(t('recycle.restoreSuccess'));
                 load();
               })
             }
           >
-            恢复
+            {t('common.restore')}
           </Button>
           <Button
             type="link"
@@ -85,17 +88,17 @@ export function RecyclePage() {
             size="small"
             onClick={() =>
               confirmAction(
-                '确认永久删除',
-                `永久删除空间「${record.name}」？此操作不可撤销。`,
+                t('recycle.permanentDeleteTitle'),
+                t('recycle.permanentDeleteWorkspace', { name: record.name }),
                 async () => {
                   await workspaceApi.permanentDelete(record.id);
-                  message.success('已永久删除');
+                  message.success(t('recycle.permanentDeleteSuccess'));
                   load();
                 },
               )
             }
           >
-            永久删除
+            {t('recycle.permanentDelete')}
           </Button>
         </>
       ),
@@ -103,16 +106,16 @@ export function RecyclePage() {
   ];
 
   const repoColumns = [
-    { title: '仓库名称', dataIndex: 'name', key: 'name' },
-    { title: '所属空间', dataIndex: 'workspaceName', key: 'workspaceName' },
+    { title: t('recycle.columnRepoName'), dataIndex: 'name', key: 'name' },
+    { title: t('recycle.columnWorkspace'), dataIndex: 'workspaceName', key: 'workspaceName' },
     {
-      title: '删除时间',
+      title: t('recycle.columnDeletedAt'),
       dataIndex: 'deletedAt',
       key: 'deletedAt',
       render: (v: string) => (v ? new Date(v).toLocaleString() : '-'),
     },
     {
-      title: '操作',
+      title: t('recycle.columnAction'),
       key: 'action',
       render: (_: unknown, record: Repository & { workspaceName?: string }) => (
         <>
@@ -120,14 +123,14 @@ export function RecyclePage() {
             type="link"
             size="small"
             onClick={() =>
-              confirmAction('确认恢复', `恢复仓库「${record.name}」？`, async () => {
+              confirmAction(t('recycle.restoreConfirmTitle'), t('recycle.restoreRepoContent', { name: record.name }), async () => {
                 await repoApi.restore(record.workspaceId, record.id);
-                message.success('已恢复');
+                message.success(t('recycle.restoreSuccess'));
                 load();
               })
             }
           >
-            恢复
+            {t('common.restore')}
           </Button>
           <Button
             type="link"
@@ -135,17 +138,17 @@ export function RecyclePage() {
             size="small"
             onClick={() =>
               confirmAction(
-                '确认永久删除',
-                `永久删除仓库「${record.name}」？此操作不可撤销。`,
+                t('recycle.permanentDeleteTitle'),
+                t('recycle.permanentDeleteRepo', { name: record.name }),
                 async () => {
                   await repoApi.permanentDelete(record.workspaceId, record.id);
-                  message.success('已永久删除');
+                  message.success(t('recycle.permanentDeleteSuccess'));
                   load();
                 },
               )
             }
           >
-            永久删除
+            {t('recycle.permanentDelete')}
           </Button>
         </>
       ),
@@ -161,25 +164,25 @@ export function RecyclePage() {
   }
 
   return (
-    <PageContainer title="回收站" subtitle="30 天内删除的内容可在此恢复">
+    <PageContainer title={t('recycle.title')} subtitle={t('recycle.subtitle')}>
       <Tabs
         items={[
           {
             key: 'workspaces',
-            label: `空间 (${workspaces.length})`,
+            label: t('recycle.tabWorkspaces', { count: workspaces.length }),
             children:
               workspaces.length === 0 ? (
-                <Empty description="暂无已删除的空间" />
+                <Empty description={t('recycle.emptyWorkspaces')} />
               ) : (
                 <Table rowKey="id" columns={wsColumns} dataSource={workspaces} pagination={false} />
               ),
           },
           {
             key: 'repos',
-            label: `仓库 (${repos.length})`,
+            label: t('recycle.tabRepos', { count: repos.length }),
             children:
               repos.length === 0 ? (
-                <Empty description="暂无已删除的仓库" />
+                <Empty description={t('recycle.emptyRepos')} />
               ) : (
                 <Table rowKey="id" columns={repoColumns} dataSource={repos} pagination={false} />
               ),

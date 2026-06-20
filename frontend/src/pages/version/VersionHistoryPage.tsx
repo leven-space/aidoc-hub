@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Spin, message } from 'antd';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { VersionHistory } from './VersionHistory';
 import { VersionDiff } from '../../components/VersionDiff';
 import { repoApi, versionApi, workspaceApi } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
+import { getApiErrorMessage } from '../../utils/apiError';
 import { pickDefaultPreviewFile } from '../../utils/pickPreviewFile';
 import type { VersionInfo } from '../../types';
 
 export function VersionHistoryPage() {
+  const { t } = useTranslation();
   const { workspaceId, repoId } = useParams<{ workspaceId: string; repoId: string }>();
   const { user } = useAuth();
   const [versions, setVersions] = useState<VersionInfo[]>([]);
@@ -34,7 +37,7 @@ export function VersionHistoryPage() {
         const member = workspace.members?.find((m) => m.userId === user?.id);
         setCanRestore(member?.role === 'ADMIN' || member?.role === 'EDITOR');
       })
-      .catch((err) => message.error(err.message))
+      .catch((err) => message.error(getApiErrorMessage(err, 'common.loadFailed')))
       .finally(() => setLoading(false));
   }, [workspaceId, repoId, user?.id]);
 
@@ -42,7 +45,7 @@ export function VersionHistoryPage() {
     if (!workspaceId || !repoId) return;
     try {
       await versionApi.restore(workspaceId, repoId, oid);
-      message.success('版本已恢复');
+      message.success(t('version.restoreSuccess'));
       const [updated, fileList] = await Promise.all([
         versionApi.history(workspaceId, repoId),
         repoApi.listFiles(workspaceId, repoId),
@@ -51,7 +54,7 @@ export function VersionHistoryPage() {
       setFiles(fileList);
       setSelectedFile(pickDefaultPreviewFile(fileList));
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '恢复失败');
+      message.error(getApiErrorMessage(err, 'version.restoreFailed'));
     }
   };
 
@@ -59,7 +62,7 @@ export function VersionHistoryPage() {
     if (!workspaceId || !repoId) return;
     const path = filePath || selectedFile;
     if (!path) {
-      message.warning('暂无可对比的文件');
+      message.warning(t('version.noComparableFile'));
       return;
     }
     try {
@@ -71,7 +74,7 @@ export function VersionHistoryPage() {
       setDiffData(data);
       setShowDiff(true);
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '对比失败');
+      message.error(getApiErrorMessage(err, 'version.compareFailed'));
     }
   };
 

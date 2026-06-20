@@ -1,8 +1,5 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
+import { AppException, ErrorCode } from '../common/exceptions/app.exception';
 import { GitService } from '../git/git.service';
 import { WorkspaceService } from '../workspace/workspace.service';
 import { PrismaService } from '../common/prisma/prisma.service';
@@ -20,7 +17,7 @@ export class VersionService {
       where: { id: repoId, workspaceId, isDeleted: false },
     });
     if (!repo) {
-      throw new NotFoundException('Repository not found');
+      throw new AppException(ErrorCode.REPO_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
     return repo;
   }
@@ -43,10 +40,13 @@ export class VersionService {
     await this.assertRepo(workspaceId, repoId);
 
     if (!filePath?.trim()) {
-      throw new BadRequestException('path is required');
+      throw new AppException(ErrorCode.PATH_REQUIRED, HttpStatus.BAD_REQUEST);
     }
     if (!fromVersion?.trim() || !toVersion?.trim()) {
-      throw new BadRequestException('from and to version are required');
+      throw new AppException(
+        ErrorCode.VERSION_RANGE_REQUIRED,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const fromContent = await this.gitService.readFileAtVersion(
@@ -107,7 +107,10 @@ export class VersionService {
     await this.assertRepo(workspaceId, repoId);
 
     if (!targetVersion?.trim()) {
-      throw new BadRequestException('version is required');
+      throw new AppException(
+        ErrorCode.VERSION_REQUIRED,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });

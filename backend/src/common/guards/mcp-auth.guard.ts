@@ -2,8 +2,9 @@ import {
   Injectable,
   CanActivate,
   ExecutionContext,
-  UnauthorizedException,
+  HttpStatus,
 } from '@nestjs/common';
+import { AppException, ErrorCode } from '../exceptions/app.exception';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { TokenService } from '../../auth/token.service';
@@ -23,8 +24,9 @@ export class McpAuthGuard implements CanActivate {
     const authHeader = request.headers.authorization as string | undefined;
 
     if (!authHeader?.startsWith('Bearer ')) {
-      throw new UnauthorizedException(
-        'Missing or invalid authorization header',
+      throw new AppException(
+        ErrorCode.INVALID_AUTH_HEADER,
+        HttpStatus.UNAUTHORIZED,
       );
     }
 
@@ -33,7 +35,10 @@ export class McpAuthGuard implements CanActivate {
     if (token.startsWith('adh_')) {
       const result = await this.tokenService.validateToken(token);
       if (!result) {
-        throw new UnauthorizedException('Invalid or expired access token');
+        throw new AppException(
+          ErrorCode.INVALID_OR_EXPIRED_TOKEN,
+          HttpStatus.UNAUTHORIZED,
+        );
       }
       request.user = {
         userId: result.userId,
@@ -53,12 +58,18 @@ export class McpAuthGuard implements CanActivate {
         select: { id: true, systemRole: true },
       });
       if (!user) {
-        throw new UnauthorizedException('User not found');
+        throw new AppException(
+          ErrorCode.USER_NOT_FOUND,
+          HttpStatus.UNAUTHORIZED,
+        );
       }
       request.user = { userId: user.id, systemRole: user.systemRole };
       return true;
     } catch {
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new AppException(
+        ErrorCode.INVALID_OR_EXPIRED_TOKEN,
+        HttpStatus.UNAUTHORIZED,
+      );
     }
   }
 }

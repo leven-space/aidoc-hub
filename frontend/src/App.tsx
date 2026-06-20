@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
+import enUS from 'antd/locale/en_US';
+import { useTranslation } from 'react-i18next';
 import { theme } from './theme';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute, GuestRoute } from './components/ProtectedRoute';
@@ -23,39 +25,48 @@ import { VersionHistoryPage } from './pages/version/VersionHistoryPage';
 import { SharePage } from './pages/share/SharePage';
 import './styles/global.css';
 
-function App() {
+function AppRoutes() {
   return (
-    <ConfigProvider theme={theme} locale={zhCN}>
+    <BrowserRouter>
+      <SetupGuard>
+        <Routes>
+          <Route path="/setup" element={<SetupPage />} />
+
+          <Route element={<GuestRoute><AuthLayout /></GuestRoute>}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+          </Route>
+
+          <Route path="/share/:token" element={<SharePage />} />
+
+          <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+            <Route path="/" element={<WorkspaceList />} />
+            <Route path="/workspaces/:workspaceId" element={<WorkspaceDetail />} />
+            <Route path="/workspaces/:workspaceId/repos/:repoId" element={<RepoDetail />} />
+            <Route path="/workspaces/:workspaceId/repos/:repoId/upload" element={<UploadPage />} />
+            <Route path="/workspaces/:workspaceId/repos/:repoId/versions" element={<VersionHistoryPage />} />
+            <Route path="/recycle" element={<RecyclePage />} />
+            <Route path="/settings/tokens" element={<TokenManage />} />
+            <Route path="/settings/mcp" element={<McpConfigPage />} />
+            <Route path="/settings/system" element={<SystemConfigPage />} />
+            <Route path="/settings/audit" element={<AuditLogPage />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </SetupGuard>
+    </BrowserRouter>
+  );
+}
+
+function App() {
+  const { i18n } = useTranslation();
+  const antdLocale = i18n.language === 'en-US' ? enUS : zhCN;
+
+  return (
+    <ConfigProvider theme={theme} locale={antdLocale}>
       <AuthProvider>
-        <BrowserRouter>
-          <SetupGuard>
-            <Routes>
-              <Route path="/setup" element={<SetupPage />} />
-
-              <Route element={<GuestRoute><AuthLayout /></GuestRoute>}>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-              </Route>
-
-              <Route path="/share/:token" element={<SharePage />} />
-
-              <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-                <Route path="/" element={<WorkspaceList />} />
-                <Route path="/workspaces/:workspaceId" element={<WorkspaceDetail />} />
-                <Route path="/workspaces/:workspaceId/repos/:repoId" element={<RepoDetail />} />
-                <Route path="/workspaces/:workspaceId/repos/:repoId/upload" element={<UploadPage />} />
-                <Route path="/workspaces/:workspaceId/repos/:repoId/versions" element={<VersionHistoryPage />} />
-                <Route path="/recycle" element={<RecyclePage />} />
-                <Route path="/settings/tokens" element={<TokenManage />} />
-                <Route path="/settings/mcp" element={<McpConfigPage />} />
-                <Route path="/settings/system" element={<SystemConfigPage />} />
-                <Route path="/settings/audit" element={<AuditLogPage />} />
-              </Route>
-
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </SetupGuard>
-        </BrowserRouter>
+        <AppRoutes />
       </AuthProvider>
     </ConfigProvider>
   );

@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
+import { AppException, ErrorCode } from '../common/exceptions/app.exception';
 import { randomBytes, createHash } from 'crypto';
 import { PrismaService } from '../common/prisma/prisma.service';
 
@@ -57,7 +58,7 @@ export class TokenService {
       where: { id: tokenId, userId },
     });
     if (!token) {
-      throw new NotFoundException('Token not found');
+      throw new AppException(ErrorCode.TOKEN_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
     await this.prisma.accessToken.update({
       where: { id: tokenId },

@@ -1,9 +1,5 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
+import { AppException, ErrorCode } from '../common/exceptions/app.exception';
 import { PrismaService } from '../common/prisma/prisma.service';
 
 @Injectable()
@@ -47,11 +43,17 @@ export class WorkspaceService {
       },
     });
     if (!workspace) {
-      throw new NotFoundException('Workspace not found');
+      throw new AppException(
+        ErrorCode.WORKSPACE_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
+      );
     }
     const member = workspace.members.find((m) => m.userId === userId);
     if (!member) {
-      throw new ForbiddenException('No access to this workspace');
+      throw new AppException(
+        ErrorCode.WORKSPACE_NO_ACCESS,
+        HttpStatus.FORBIDDEN,
+      );
     }
     return workspace;
   }
@@ -83,7 +85,10 @@ export class WorkspaceService {
       where: { id: workspaceId, isDeleted: true },
     });
     if (!workspace) {
-      throw new NotFoundException('Deleted workspace not found');
+      throw new AppException(
+        ErrorCode.WORKSPACE_DELETED_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
+      );
     }
     return this.prisma.workspace.update({
       where: { id: workspaceId },
@@ -97,7 +102,10 @@ export class WorkspaceService {
       where: { id: workspaceId, isDeleted: true },
     });
     if (!workspace) {
-      throw new NotFoundException('Deleted workspace not found');
+      throw new AppException(
+        ErrorCode.WORKSPACE_DELETED_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
+      );
     }
     await this.prisma.workspace.delete({ where: { id: workspaceId } });
     return { success: true };
@@ -130,14 +138,20 @@ export class WorkspaceService {
 
     const targetUser = await this.prisma.user.findUnique({ where: { phone } });
     if (!targetUser) {
-      throw new NotFoundException('User not found with this phone number');
+      throw new AppException(
+        ErrorCode.USER_NOT_FOUND_BY_PHONE,
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     const existing = await this.prisma.workspaceMember.findUnique({
       where: { userId_workspaceId: { userId: targetUser.id, workspaceId } },
     });
     if (existing) {
-      throw new BadRequestException('User is already a member');
+      throw new AppException(
+        ErrorCode.USER_ALREADY_MEMBER,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     return this.prisma.workspaceMember.create({
@@ -169,10 +183,13 @@ export class WorkspaceService {
       where: { id: memberId },
     });
     if (!member) {
-      throw new NotFoundException('Member not found');
+      throw new AppException(ErrorCode.MEMBER_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
     if (member.userId === userId) {
-      throw new BadRequestException('Cannot remove yourself');
+      throw new AppException(
+        ErrorCode.CANNOT_REMOVE_SELF,
+        HttpStatus.BAD_REQUEST,
+      );
     }
     await this.prisma.workspaceMember.delete({ where: { id: memberId } });
     return { success: true };
@@ -194,7 +211,10 @@ export class WorkspaceService {
       where: { userId_workspaceId: { userId, workspaceId } },
     });
     if (!member) {
-      throw new ForbiddenException('No access to this workspace');
+      throw new AppException(
+        ErrorCode.WORKSPACE_NO_ACCESS,
+        HttpStatus.FORBIDDEN,
+      );
     }
     return member;
   }
@@ -202,7 +222,10 @@ export class WorkspaceService {
   async checkAdmin(workspaceId: string, userId: string) {
     const member = await this.checkMembership(workspaceId, userId);
     if (member.role !== 'ADMIN') {
-      throw new ForbiddenException('Admin permission required');
+      throw new AppException(
+        ErrorCode.ADMIN_PERMISSION_REQUIRED,
+        HttpStatus.FORBIDDEN,
+      );
     }
     return member;
   }
@@ -210,7 +233,10 @@ export class WorkspaceService {
   async checkEditor(workspaceId: string, userId: string) {
     const member = await this.checkMembership(workspaceId, userId);
     if (member.role !== 'ADMIN' && member.role !== 'EDITOR') {
-      throw new ForbiddenException('Editor permission required');
+      throw new AppException(
+        ErrorCode.EDITOR_PERMISSION_REQUIRED,
+        HttpStatus.FORBIDDEN,
+      );
     }
     return member;
   }

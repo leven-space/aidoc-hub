@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Table, Form, Input, DatePicker, Button, Space, message, Select } from 'antd';
 import { DownloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { PageContainer } from '../../components/PageContainer';
 import { auditApi, workspaceApi } from '../../services';
+import { getApiErrorMessage } from '../../utils/apiError';
 import type { AuditLog, Workspace } from '../../types';
 
 export function AuditLogPage() {
+  const { t } = useTranslation();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -30,7 +33,7 @@ export function AuditLogPage() {
       setLogs(result.items);
       setTotal(result.total);
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '加载失败');
+      message.error(getApiErrorMessage(err, 'common.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -59,7 +62,7 @@ export function AuditLogPage() {
   };
 
   const handleExport = () => {
-    const header = '时间,操作人,操作,目标类型,目标ID,详情,IP\n';
+    const header = `${t('audit.csvHeader')}\n`;
     const rows = logs
       .map(
         (log) =>
@@ -75,44 +78,44 @@ export function AuditLogPage() {
 
   const columns = [
     {
-      title: '时间',
+      title: t('audit.columnTime'),
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 180,
       render: (v: string) => new Date(v).toLocaleString(),
     },
     {
-      title: '操作人',
+      title: t('audit.columnUser'),
       key: 'user',
       width: 120,
       render: (_: unknown, record: AuditLog) => record.user?.name || '-',
     },
-    { title: '操作', dataIndex: 'action', key: 'action', ellipsis: true },
-    { title: '目标类型', dataIndex: 'targetType', key: 'targetType', width: 100 },
-    { title: 'IP', dataIndex: 'ip', key: 'ip', width: 120 },
+    { title: t('audit.columnAction'), dataIndex: 'action', key: 'action', ellipsis: true },
+    { title: t('audit.columnTargetType'), dataIndex: 'targetType', key: 'targetType', width: 100 },
+    { title: t('audit.columnIp'), dataIndex: 'ip', key: 'ip', width: 120 },
   ];
 
   return (
     <PageContainer
-      title="审计日志"
-      subtitle="查看系统操作记录（管理员可见）"
+      title={t('audit.title')}
+      subtitle={t('audit.subtitle')}
       extra={
         <Button icon={<DownloadOutlined />} onClick={handleExport}>
-          导出 CSV
+          {t('audit.exportCsv')}
         </Button>
       }
     >
       <Form form={form} layout="inline" onFinish={handleSearch} style={{ marginBottom: 16 }}>
         <Form.Item name="workspaceId">
           <Select
-            placeholder="选择空间"
+            placeholder={t('audit.workspacePlaceholder')}
             allowClear
             style={{ width: 180 }}
             options={workspaces.map((ws) => ({ label: ws.name, value: ws.id }))}
           />
         </Form.Item>
         <Form.Item name="action">
-          <Input placeholder="操作类型" prefix={<SearchOutlined />} allowClear />
+          <Input placeholder={t('audit.actionPlaceholder')} prefix={<SearchOutlined />} allowClear />
         </Form.Item>
         <Form.Item name="dateRange">
           <DatePicker.RangePicker />
@@ -120,7 +123,7 @@ export function AuditLogPage() {
         <Form.Item>
           <Space>
             <Button type="primary" htmlType="submit">
-              筛选
+              {t('common.filter')}
             </Button>
             <Button
               onClick={() => {
@@ -129,7 +132,7 @@ export function AuditLogPage() {
                 setPage(1);
               }}
             >
-              重置
+              {t('common.reset')}
             </Button>
           </Space>
         </Form.Item>
@@ -145,12 +148,12 @@ export function AuditLogPage() {
           total,
           pageSize: 20,
           onChange: setPage,
-          showTotal: (t) => `共 ${t} 条`,
+          showTotal: (count) => t('audit.total', { total: count }),
         }}
         expandable={{
           expandedRowRender: (record) => (
             <pre style={{ margin: 0, fontSize: 12, whiteSpace: 'pre-wrap' }}>
-              {record.details || '无详情'}
+              {record.details || t('audit.noDetail')}
             </pre>
           ),
         }}

@@ -2,15 +2,19 @@ import {
   Injectable,
   CanActivate,
   ExecutionContext,
-  ForbiddenException,
+  HttpStatus,
 } from '@nestjs/common';
+import { AppException, ErrorCode } from '../exceptions/app.exception';
 
 @Injectable()
 export class SystemAdminGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     if (request.user?.systemRole !== 'SYSTEM_ADMIN') {
-      throw new ForbiddenException('System administrator access required');
+      throw new AppException(
+        ErrorCode.SYSTEM_ADMIN_REQUIRED,
+        HttpStatus.FORBIDDEN,
+      );
     }
     return true;
   }

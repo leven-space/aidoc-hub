@@ -14,8 +14,10 @@ import {
 } from 'antd';
 import { FileOutlined, FolderOutlined, LockOutlined } from '@ant-design/icons';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { HtmlPreview } from '../../components/HtmlPreview';
 import { shareApi } from '../../services';
+import { getApiErrorMessage } from '../../utils/apiError';
 import { pickDefaultPreviewFile } from '../../utils/pickPreviewFile';
 import type { ShareView } from '../../types';
 
@@ -71,6 +73,7 @@ function buildTreeData(filePaths: string[]): Array<{
 }
 
 export function SharePage() {
+  const { t } = useTranslation();
   const { token } = useParams<{ token: string }>();
   const [loading, setLoading] = useState(true);
   const [passwordRequired, setPasswordRequired] = useState(false);
@@ -100,7 +103,7 @@ export function SharePage() {
         const defaultFile = pickDefaultPreviewFile(result.files);
         setSelectedFile(defaultFile);
       } catch (err) {
-        message.error(err instanceof Error ? err.message : '分享链接无效');
+        message.error(getApiErrorMessage(err, 'share.invalidLink'));
         setShareView(null);
       } finally {
         setLoading(false);
@@ -153,7 +156,7 @@ export function SharePage() {
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: 80 }}>
-        <Spin size="large" tip="加载分享内容..." />
+        <Spin size="large" tip={t('share.loadingShare')} />
       </div>
     );
   }
@@ -172,21 +175,19 @@ export function SharePage() {
       >
         <Card style={{ width: 400, maxWidth: '100%' }}>
           <Typography.Title level={4} style={{ marginTop: 0 }}>
-            <LockOutlined /> 需要访问密码
+            <LockOutlined /> {t('share.passwordRequired')}
           </Typography.Title>
-          <Typography.Paragraph type="secondary">
-            此分享链接已设置密码，请输入后继续查看。
-          </Typography.Paragraph>
+          <Typography.Paragraph type="secondary">{t('share.passwordHint')}</Typography.Paragraph>
           <Form form={form} layout="vertical" onFinish={handlePasswordSubmit}>
             <Form.Item
               name="password"
-              rules={[{ required: true, message: '请输入访问密码' }]}
+              rules={[{ required: true, message: t('validation.sharePasswordRequired') }]}
             >
-              <Input.Password placeholder="访问密码" />
+              <Input.Password placeholder={t('share.accessPassword')} />
             </Form.Item>
             <Form.Item style={{ marginBottom: 0 }}>
               <Button type="primary" htmlType="submit" block>
-                确认
+                {t('common.confirm')}
               </Button>
             </Form.Item>
           </Form>
@@ -198,7 +199,7 @@ export function SharePage() {
   if (!shareView) {
     return (
       <div style={{ padding: 80 }}>
-        <Empty description="分享链接无效或已失效" />
+        <Empty description={t('share.invalidOrExpired')} />
       </div>
     );
   }
@@ -225,12 +226,12 @@ export function SharePage() {
           )}
         </div>
         <Tag color={shareView.type === 'SOURCE_ACCESS' ? 'blue' : 'default'}>
-          {shareView.type === 'SOURCE_ACCESS' ? '可查看源码' : '仅预览'}
+          {shareView.type === 'SOURCE_ACCESS' ? t('share.tagSource') : t('share.tagPreview')}
         </Tag>
       </div>
 
       {shareView.files.length === 0 ? (
-        <Empty description="该分享暂无文件" style={{ padding: 80 }} />
+        <Empty description={t('share.noFiles')} style={{ padding: 80 }} />
       ) : (
         <Layout style={{ background: '#fff', minHeight: 'calc(100vh - 73px)' }}>
           <Sider width={240} theme="light" style={{ borderRight: '1px solid #f0f0f0' }}>
@@ -241,7 +242,7 @@ export function SharePage() {
                 borderBottom: '1px solid #f0f0f0',
               }}
             >
-              文件列表
+              {t('share.fileList')}
             </div>
             <Tree
               showIcon
@@ -255,7 +256,7 @@ export function SharePage() {
           </Sider>
           <Content style={{ padding: 16 }}>
             {!canViewSource && selectedFile && !isHtmlFile(selectedFile) ? (
-              <Empty description="当前分享仅支持 HTML 文件预览" style={{ padding: 80 }} />
+              <Empty description={t('share.htmlOnly')} style={{ padding: 80 }} />
             ) : (
               <HtmlPreview
                 content={previewContent}

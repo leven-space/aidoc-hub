@@ -2,8 +2,9 @@ import {
   Injectable,
   CanActivate,
   ExecutionContext,
-  UnauthorizedException,
+  HttpStatus,
 } from '@nestjs/common';
+import { AppException, ErrorCode } from '../exceptions/app.exception';
 import { TokenService } from '../../auth/token.service';
 
 @Injectable()
@@ -15,8 +16,9 @@ export class TokenAuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException(
-        'Missing or invalid authorization header',
+      throw new AppException(
+        ErrorCode.INVALID_AUTH_HEADER,
+        HttpStatus.UNAUTHORIZED,
       );
     }
 
@@ -26,7 +28,10 @@ export class TokenAuthGuard implements CanActivate {
     if (token.startsWith('adh_')) {
       const result = await this.tokenService.validateToken(token);
       if (!result) {
-        throw new UnauthorizedException('Invalid or expired access token');
+        throw new AppException(
+          ErrorCode.INVALID_OR_EXPIRED_TOKEN,
+          HttpStatus.UNAUTHORIZED,
+        );
       }
       request.user = { userId: result.userId, tokenScope: result.scope };
       return true;

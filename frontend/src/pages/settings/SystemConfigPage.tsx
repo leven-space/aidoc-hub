@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Card, Form, Input, Switch, Button, message, Spin, Alert } from 'antd';
 import { Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageContainer } from '../../components/PageContainer';
 import { systemApi } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
+import { getApiErrorMessage } from '../../utils/apiError';
 import type { SystemConfig } from '../../types';
 
 export function SystemConfigPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -16,7 +19,7 @@ export function SystemConfigPage() {
     systemApi
       .getConfig()
       .then((config) => form.setFieldsValue(config))
-      .catch((err) => message.error(err instanceof Error ? err.message : '加载失败'))
+      .catch((err) => message.error(getApiErrorMessage(err, 'common.loadFailed')))
       .finally(() => setLoading(false));
   }, [form]);
 
@@ -28,9 +31,9 @@ export function SystemConfigPage() {
     setSaving(true);
     try {
       await systemApi.updateConfig(values);
-      message.success('系统配置已保存');
+      message.success(t('system.saveSuccess'));
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '保存失败');
+      message.error(getApiErrorMessage(err, 'common.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -38,53 +41,41 @@ export function SystemConfigPage() {
 
   if (loading) {
     return (
-      <PageContainer title="系统配置">
+      <PageContainer title={t('system.title')}>
         <Spin />
       </PageContainer>
     );
   }
 
   return (
-    <PageContainer
-      title="系统配置"
-      subtitle="配置 MCP 公网地址、站点名称及注册策略（仅系统管理员）"
-    >
-      <Alert
-        type="info"
-        showIcon
-        style={{ marginBottom: 16 }}
-        message="修改对外 API 地址后，MCP 接入页将自动使用新地址生成配置"
-      />
+    <PageContainer title={t('system.title')} subtitle={t('system.subtitle')}>
+      <Alert type="info" showIcon style={{ marginBottom: 16 }} message={t('system.apiUrlAlert')} />
       <Card>
         <Form form={form} layout="vertical" onFinish={onFinish} style={{ maxWidth: 560 }}>
           <Form.Item
             name="siteName"
-            label="站点名称"
-            rules={[{ required: true, message: '请输入站点名称' }]}
+            label={t('system.siteName')}
+            rules={[{ required: true, message: t('validation.siteNameRequired') }]}
           >
             <Input placeholder="AI Doc Hub" />
           </Form.Item>
           <Form.Item
             name="publicApiUrl"
-            label="对外 API 地址"
-            extra="供 MCP 与外部 AI 客户端访问，不含 /api 后缀"
+            label={t('system.publicApiUrl')}
+            extra={t('system.apiUrlExtra')}
             rules={[
-              { required: true, message: '请输入对外 API 地址' },
-              { type: 'url', message: '请输入有效的 URL' },
+              { required: true, message: t('validation.apiUrlRequired') },
+              { type: 'url', message: t('validation.urlInvalid') },
             ]}
           >
             <Input placeholder="https://docs.example.com" />
           </Form.Item>
-          <Form.Item
-            name="registrationEnabled"
-            label="允许公开注册"
-            valuePropName="checked"
-          >
-            <Switch checkedChildren="开" unCheckedChildren="关" />
+          <Form.Item name="registrationEnabled" label={t('system.registrationEnabled')} valuePropName="checked">
+            <Switch checkedChildren={t('common.on')} unCheckedChildren={t('common.off')} />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" loading={saving}>
-              保存配置
+              {t('system.saveConfig')}
             </Button>
           </Form.Item>
         </Form>

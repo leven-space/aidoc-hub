@@ -18,16 +18,19 @@ import {
   FolderOutlined,
 } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageContainer } from '../../components/PageContainer';
 import { HtmlPreview } from '../../components/HtmlPreview';
 import { ShareModal } from '../../components/ShareModal';
 import { repoApi, versionApi } from '../../services';
+import { getApiErrorMessage } from '../../utils/apiError';
 import type { Repository, VersionInfo } from '../../types';
 import { pickDefaultPreviewFile } from '../../utils/pickPreviewFile';
 
 const { Sider, Content } = Layout;
 
 export function RepoDetail() {
+  const { t } = useTranslation();
   const { workspaceId, repoId } = useParams<{ workspaceId: string; repoId: string }>();
   const [repo, setRepo] = useState<Repository | null>(null);
   const [files, setFiles] = useState<string[]>([]);
@@ -67,7 +70,7 @@ export function RepoDetail() {
         setSelectedFile(defaultFile);
       }
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '加载失败');
+      message.error(getApiErrorMessage(err, 'common.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -123,7 +126,7 @@ export function RepoDetail() {
     {
       key: 'download',
       icon: <DownloadOutlined />,
-      label: '下载文件',
+      label: t('repo.downloadFile'),
       disabled: !selectedFile,
       onClick: handleDownload,
     },
@@ -187,7 +190,7 @@ export function RepoDetail() {
             key: fullPath,
             title: key,
             icon: <FolderOutlined />,
-            children: buildNode(obj[key], fullPath),
+            children: buildNode(obj[key] as Record<string, unknown>, fullPath),
           };
         });
     };
@@ -202,8 +205,8 @@ export function RepoDetail() {
       title={repo.name}
       subtitle={repo.description}
       breadcrumb={[
-        { title: '工作空间', href: '/' },
-        { title: '空间详情', href: `/workspaces/${workspaceId}` },
+        { title: t('workspace.breadcrumb'), href: '/' },
+        { title: t('workspace.detailSpace'), href: `/workspaces/${workspaceId}` },
         { title: repo.name },
       ]}
       extra={
@@ -212,20 +215,20 @@ export function RepoDetail() {
             icon={<HistoryOutlined />}
             onClick={() => navigate(`/workspaces/${workspaceId}/repos/${repoId}/versions`)}
           >
-            版本历史
+            {t('repo.versionHistory')}
           </Button>
           <Button icon={<ShareAltOutlined />} onClick={() => setShareOpen(true)}>
-            分享
+            {t('repo.share')}
           </Button>
           <Button
             type="primary"
             icon={<UploadOutlined />}
             onClick={() => navigate(`/workspaces/${workspaceId}/repos/${repoId}/upload`)}
           >
-            提交新版本
+            {t('repo.commitNew')}
           </Button>
           <Dropdown menu={{ items: moreMenuItems }}>
-            <Button>更多</Button>
+            <Button>{t('common.more')}</Button>
           </Dropdown>
         </Space>
       }
@@ -233,11 +236,11 @@ export function RepoDetail() {
       <Layout style={{ background: '#fff', border: '1px solid #f0f0f0', borderRadius: 6 }}>
         <Sider width={240} theme="light" style={{ borderRight: '1px solid #f0f0f0' }}>
           <div style={{ padding: '12px 16px', fontWeight: 500, borderBottom: '1px solid #f0f0f0' }}>
-            文件列表
+            {t('repo.fileList')}
           </div>
           {files.length === 0 ? (
             <div style={{ padding: 24, color: '#999', textAlign: 'center' }}>
-              暂无文件
+              {t('repo.noFiles')}
             </div>
           ) : (
             <Tree

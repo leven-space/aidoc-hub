@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Spin, Select, Button, Space, Empty, Typography } from 'antd';
 import { FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons';
 
@@ -23,6 +24,7 @@ export function HtmlPreview({
 }: HtmlPreviewProps) {
   const [fullscreen, setFullscreen] = useState(false);
   const [loadedPreviewUrl, setLoadedPreviewUrl] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const isHtmlFile = (fp?: string) => {
     if (!fp) return true;
@@ -45,12 +47,14 @@ export function HtmlPreview({
       }}
     >
       <Space>
-        <Typography.Text type="secondary">{showHtmlPreview ? 'HTML 预览' : '文件预览'}</Typography.Text>
+        <Typography.Text type="secondary">
+          {showHtmlPreview ? t('preview.htmlPreview') : t('preview.filePreview')}
+        </Typography.Text>
         {versions && versions.length > 0 && onVersionChange && (
           <Select
             size="small"
             style={{ width: 200 }}
-            placeholder="选择版本"
+            placeholder={t('preview.selectVersion')}
             value={selectedVersion}
             onChange={onVersionChange}
             options={versions.map((v) => ({
@@ -66,7 +70,7 @@ export function HtmlPreview({
         icon={fullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
         onClick={() => setFullscreen(!fullscreen)}
       >
-        {fullscreen ? '退出全屏' : '全屏预览'}
+        {fullscreen ? t('preview.exitFullscreen') : t('preview.fullscreen')}
       </Button>
     </div>
   );
@@ -87,13 +91,13 @@ export function HtmlPreview({
                 background: 'rgba(255, 255, 255, 0.85)',
               }}
             >
-              <Spin tip="加载中..." />
+              <Spin tip={t('common.loading')} />
             </div>
           )}
           <iframe
             key={previewUrl}
             src={previewUrl}
-            title="HTML Preview"
+            title={t('preview.iframeTitle')}
             onLoad={() => setLoadedPreviewUrl(previewUrl)}
             onError={() => setLoadedPreviewUrl(previewUrl)}
             style={{
@@ -106,13 +110,13 @@ export function HtmlPreview({
         </>
       ) : loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
-          <Spin tip="加载中..." />
+          <Spin tip={t('common.loading')} />
         </div>
       ) : content ? (
         showHtmlPreview ? (
           <iframe
             srcDoc={content}
-            title="HTML Preview"
+            title={t('preview.iframeTitle')}
             style={{
               width: '100%',
               height: fullscreen ? 'calc(100vh - 120px)' : 'min(80vh, 900px)',
@@ -138,7 +142,7 @@ export function HtmlPreview({
           </pre>
         )
       ) : (
-        <Empty description="选择文件以预览" style={{ padding: 80 }} />
+        <Empty description={t('preview.selectFileHint')} style={{ padding: 80 }} />
       )}
     </div>
   );

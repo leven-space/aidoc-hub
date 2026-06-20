@@ -1,9 +1,12 @@
 import { Layout, Typography } from 'antd';
 import { Outlet, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const { Content } = Layout;
 
 export function AuthLayout() {
+  const { t } = useTranslation();
+
   return (
     <Layout style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #f5f7fa 0%, #e8f0fe 100%)' }}>
       <Content
@@ -17,9 +20,9 @@ export function AuthLayout() {
       >
         <Link to="/" style={{ marginBottom: 32, textDecoration: 'none' }}>
           <Typography.Title level={2} style={{ color: '#1677ff', margin: 0 }}>
-            AI Doc Hub
+            {t('common.appName')}
           </Typography.Title>
-          <Typography.Text type="secondary">企业 HTML 文档版本管理平台</Typography.Text>
+          <Typography.Text type="secondary">{t('auth.tagline')}</Typography.Text>
         </Link>
         <Outlet />
       </Content>

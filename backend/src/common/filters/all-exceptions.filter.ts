@@ -7,6 +7,9 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
+import { AppException } from '../exceptions/app.exception';
+import { ErrorCode } from '../i18n/error-codes';
+import { resolveLocale, translateError } from '../i18n/messages';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -16,18 +19,46 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
+    const locale = resolveLocale(request.headers['accept-language']);
 
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const message =
-      exception instanceof HttpException
-        ? exception.getResponse()
-        : 'Internal server error';
+    const rawResponse =
+      exception instanceof HttpException ? exception.getResponse() : null;
 
-    // Structured error logging
+    let code: string | undefined;
+    let message: string;
+
+    if (AppException.isAppExceptionBody(rawResponse)) {
+      code = rawResponse.code;
+      message = translateError(rawResponse.code, locale, rawResponse.params);
+    } else if (
+      typeof rawResponse === 'object' &&
+      rawResponse !== null &&
+      Array.isArray((rawResponse as { message?: unknown }).message)
+    ) {
+      code = ErrorCode.VALIDATION_FAILED;
+      const details = (rawResponse as { message: string[] }).message.join(', ');
+      message =
+        locale === 'zh-CN'
+          ? `${translateError(ErrorCode.VALIDATION_FAILED, locale)}：${details}`
+          : `${translateError(ErrorCode.VALIDATION_FAILED, locale)}: ${details}`;
+    } else if (typeof rawResponse === 'string') {
+      message = rawResponse;
+    } else if (
+      typeof rawResponse === 'object' &&
+      rawResponse !== null &&
+      typeof (rawResponse as { message?: unknown }).message === 'string'
+    ) {
+      message = (rawResponse as { message: string }).message;
+    } else {
+      code = ErrorCode.INTERNAL_ERROR;
+      message = translateError(ErrorCode.INTERNAL_ERROR, locale);
+    }
+
     if (status >= 500) {
       this.logger.error(
         `${request.method} ${request.url} ${status}`,
@@ -35,17 +66,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
       );
     } else if (status >= 400) {
       this.logger.warn(
-        `${request.method} ${request.url} ${status} - ${typeof message === 'string' ? message : JSON.stringify(message)}`,
+        `${request.method} ${request.url} ${status} - ${message}`,
       );
     }
 
     response.status(status).json({
       success: false,
       statusCode: status,
-      message:
-        typeof message === 'string'
-          ? message
-          : (message as any).message || message,
+      ...(code ? { code } : {}),
+      message,
       timestamp: new Date().toISOString(),
       path: request.url,
     });

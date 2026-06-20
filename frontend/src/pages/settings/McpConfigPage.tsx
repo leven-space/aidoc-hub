@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, Alert, Input, Button, Typography, message, Spin } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageContainer } from '../../components/PageContainer';
 import { mcpApi, tokenApi } from '../../services';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 export function McpConfigPage() {
+  const { t } = useTranslation();
   const [hasToken, setHasToken] = useState(false);
   const [setupGuideTemplate, setSetupGuideTemplate] = useState('');
   const [tokenInput, setTokenInput] = useState('');
@@ -14,33 +16,33 @@ export function McpConfigPage() {
   useEffect(() => {
     Promise.all([tokenApi.list(), mcpApi.getSetupSnippets()])
       .then(([tokenList, snippetData]) => {
-        setHasToken(tokenList.some((t) => !t.isRevoked));
+        setHasToken(tokenList.some((token) => !token.isRevoked));
         setSetupGuideTemplate(snippetData.setupGuide);
       })
-      .catch((err) => message.error(err instanceof Error ? err.message : '加载失败'))
+      .catch((err) => message.error(getApiErrorMessage(err, 'common.loadFailed')))
       .finally(() => setLoading(false));
   }, []);
 
   const resolvedGuide = useMemo(() => {
     if (!setupGuideTemplate) return '';
-    const token = tokenInput.trim() || 'adh_YOUR_TOKEN';
+    const token = tokenInput.trim() || t('mcp.tokenDefault');
     return setupGuideTemplate.replaceAll('adh_YOUR_TOKEN', token);
-  }, [setupGuideTemplate, tokenInput]);
+  }, [setupGuideTemplate, tokenInput, t]);
 
   const handleCopy = () => {
     if (!tokenInput.trim()) {
-      message.warning('请先粘贴 Personal Access Token');
+      message.warning(t('mcp.pasteTokenWarning'));
       return;
     }
     navigator.clipboard.writeText(resolvedGuide).then(
-      () => message.success('已复制全部配置说明，请粘贴给 Claude Code / Cursor 等 AI 工具'),
-      () => message.error('复制失败'),
+      () => message.success(t('mcp.copySuccess')),
+      () => message.error(t('mcp.copyFailed')),
     );
   };
 
   if (loading) {
     return (
-      <PageContainer title="MCP 接入配置">
+      <PageContainer title={t('mcp.title')}>
         <Spin />
       </PageContainer>
     );
@@ -48,11 +50,11 @@ export function McpConfigPage() {
 
   return (
     <PageContainer
-      title="MCP 接入配置"
-      subtitle="复制全部说明，粘贴给 Claude Code / Cursor 等 AI 工具即可自动完成配置"
+      title={t('mcp.title')}
+      subtitle={t('mcp.subtitle')}
       extra={
         <Button type="primary" icon={<CopyOutlined />} size="large" onClick={handleCopy}>
-          复制全部
+          {t('mcp.copyAll')}
         </Button>
       }
     >
@@ -61,22 +63,18 @@ export function McpConfigPage() {
           type="warning"
           showIcon
           style={{ marginBottom: 16 }}
-          message="尚未创建 Personal Access Token"
-          description={
-            <span>
-              请先在 <Link to="/settings/tokens">Token 管理</Link> 创建 Token，并将明文 Token 粘贴到下方。
-            </span>
-          }
+          message={t('mcp.noTokenAlert')}
+          description={t('mcp.noTokenHint')}
         />
       )}
 
       <Card>
         <Typography.Paragraph type="secondary" style={{ marginBottom: 16 }}>
-          粘贴 Token 后点击「复制全部」，将完整内容发给 AI 编程工具即可完成 MCP 配置。内容包含连接参数、各客户端配置示例、HTTP 接口说明及全部可用工具定义。
+          {t('mcp.tokenHint')}
         </Typography.Paragraph>
-        <Typography.Text type="secondary">Personal Access Token</Typography.Text>
+        <Typography.Text type="secondary">{t('mcp.tokenLabel')}</Typography.Text>
         <Input.Password
-          placeholder="粘贴 adh_ 开头的 Token"
+          placeholder={t('mcp.tokenPlaceholder')}
           value={tokenInput}
           onChange={(e) => setTokenInput(e.target.value)}
           style={{ marginTop: 8, marginBottom: 16 }}

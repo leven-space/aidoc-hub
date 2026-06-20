@@ -1,8 +1,5 @@
-import {
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
+import { AppException, ErrorCode } from '../common/exceptions/app.exception';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../common/prisma/prisma.service';
@@ -39,7 +36,10 @@ export class SystemService {
 
   async initialize(dto: InitializeSetupDto) {
     if (await this.isInitialized()) {
-      throw new ConflictException('System already initialized');
+      throw new AppException(
+        ErrorCode.SYSTEM_ALREADY_INITIALIZED,
+        HttpStatus.CONFLICT,
+      );
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
@@ -167,7 +167,10 @@ export class SystemService {
       select: { systemRole: true },
     });
     if (!user || user.systemRole !== 'SYSTEM_ADMIN') {
-      throw new ForbiddenException('System administrator access required');
+      throw new AppException(
+        ErrorCode.SYSTEM_ADMIN_REQUIRED,
+        HttpStatus.FORBIDDEN,
+      );
     }
   }
 }

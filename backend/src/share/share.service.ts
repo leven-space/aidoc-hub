@@ -1,9 +1,5 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
+import { AppException, ErrorCode } from '../common/exceptions/app.exception';
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import type { Response } from 'express';
@@ -107,7 +103,7 @@ export class ShareService {
       },
     });
     if (!repo) {
-      throw new NotFoundException('Repository not found');
+      throw new AppException(ErrorCode.REPO_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
     const files = await this.gitService.listFiles(
@@ -129,8 +125,9 @@ export class ShareService {
   async readShareFile(token: string, filePath: string, password?: string) {
     const share = await this.assertShareAccess(token, password);
     if (share.type !== 'SOURCE_ACCESS') {
-      throw new ForbiddenException(
-        'Source access is not allowed for this share',
+      throw new AppException(
+        ErrorCode.SHARE_SOURCE_ACCESS_DENIED,
+        HttpStatus.FORBIDDEN,
       );
     }
     this.assertSafeFilePath(filePath);
@@ -180,7 +177,7 @@ export class ShareService {
       where: { id: shareId, createdBy: userId },
     });
     if (!share) {
-      throw new NotFoundException('Share not found');
+      throw new AppException(ErrorCode.SHARE_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
     await this.prisma.share.update({
       where: { id: shareId },
@@ -198,7 +195,10 @@ export class ShareService {
 
     if (share.password) {
       if (!password) {
-        throw new ForbiddenException('Password required');
+        throw new AppException(
+          ErrorCode.SHARE_PASSWORD_REQUIRED,
+          HttpStatus.FORBIDDEN,
+        );
       }
       await this.verifySharePassword(share, password);
     }
@@ -212,7 +212,10 @@ export class ShareService {
     });
 
     if (!share || !share.isActive) {
-      throw new NotFoundException('Share link not found or deactivated');
+      throw new AppException(
+        ErrorCode.SHARE_LINK_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     return share;
@@ -220,11 +223,17 @@ export class ShareService {
 
   private ensureShareLimits(share: Share) {
     if (share.expiresAt && share.expiresAt < new Date()) {
-      throw new BadRequestException('Share link has expired');
+      throw new AppException(
+        ErrorCode.SHARE_LINK_EXPIRED,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     if (share.maxVisits && share.visitCount >= share.maxVisits) {
-      throw new BadRequestException('Share link has reached max visits');
+      throw new AppException(
+        ErrorCode.SHARE_MAX_VISITS,
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
@@ -234,7 +243,10 @@ export class ShareService {
     }
     const valid = await bcrypt.compare(password, share.password);
     if (!valid) {
-      throw new ForbiddenException('Invalid password');
+      throw new AppException(
+        ErrorCode.SHARE_INVALID_PASSWORD,
+        HttpStatus.FORBIDDEN,
+      );
     }
   }
 
@@ -247,7 +259,13 @@ export class ShareService {
 
   private assertSafeFilePath(filePath: string) {
     if (!filePath || filePath.includes('..') || filePath.startsWith('/')) {
-      throw new BadRequestException(`Invalid file path: ${filePath}`);
+      throw new AppException(
+        ErrorCode.INVALID_FILE_PATH,
+        HttpStatus.BAD_REQUEST,
+        {
+          path: filePath,
+        },
+      );
     }
   }
 }

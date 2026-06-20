@@ -1,8 +1,5 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
+import { AppException, ErrorCode } from '../common/exceptions/app.exception';
 import type { Response } from 'express';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { GitService, type RepoFileInput } from '../git/git.service';
@@ -32,7 +29,10 @@ export class RepoService {
       where: { workspaceId, name, isDeleted: false },
     });
     if (existing) {
-      throw new BadRequestException('Repository with this name already exists');
+      throw new AppException(
+        ErrorCode.REPO_NAME_EXISTS,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const repo = await this.prisma.repository.create({
@@ -58,7 +58,7 @@ export class RepoService {
       where: { id: repoId, workspaceId, isDeleted: false },
     });
     if (!repo) {
-      throw new NotFoundException('Repository not found');
+      throw new AppException(ErrorCode.REPO_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
     const latest = await this.gitService.getLatestVersion(workspaceId, repoId);
     return { ...repo, latestVersion: latest };
@@ -135,7 +135,10 @@ export class RepoService {
       where: { id: repoId, workspaceId, isDeleted: true },
     });
     if (!repo) {
-      throw new NotFoundException('Deleted repository not found');
+      throw new AppException(
+        ErrorCode.REPO_DELETED_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
+      );
     }
     return this.prisma.repository.update({
       where: { id: repoId },
@@ -153,7 +156,10 @@ export class RepoService {
       where: { id: repoId, workspaceId, isDeleted: true },
     });
     if (!repo) {
-      throw new NotFoundException('Deleted repository not found');
+      throw new AppException(
+        ErrorCode.REPO_DELETED_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
+      );
     }
     await this.prisma.repository.delete({ where: { id: repoId } });
     return { success: true };
@@ -203,26 +209,50 @@ export class RepoService {
 
   private assertSafeFilePath(filePath: string) {
     if (!filePath || filePath.includes('..') || filePath.startsWith('/')) {
-      throw new BadRequestException(`Invalid file path: ${filePath}`);
+      throw new AppException(
+        ErrorCode.INVALID_FILE_PATH,
+        HttpStatus.BAD_REQUEST,
+        {
+          path: filePath,
+        },
+      );
     }
   }
 
   private validateFiles(files: RepoFileInput[]) {
     if (!files || files.length === 0) {
-      throw new BadRequestException('No files provided');
+      throw new AppException(
+        ErrorCode.NO_FILES_PROVIDED,
+        HttpStatus.BAD_REQUEST,
+      );
     }
     if (files.length > MAX_FILES_PER_COMMIT) {
-      throw new BadRequestException(
-        `Maximum ${MAX_FILES_PER_COMMIT} files per commit`,
+      throw new AppException(
+        ErrorCode.MAX_FILES_EXCEEDED,
+        HttpStatus.BAD_REQUEST,
+        {
+          max: MAX_FILES_PER_COMMIT,
+        },
       );
     }
     for (const file of files) {
       if (file.filePath.includes('..') || file.filePath.startsWith('/')) {
-        throw new BadRequestException(`Invalid file path: ${file.filePath}`);
+        throw new AppException(
+          ErrorCode.INVALID_FILE_PATH,
+          HttpStatus.BAD_REQUEST,
+          {
+            path: file.filePath,
+          },
+        );
       }
       if (this.getFileByteLength(file) > MAX_FILE_SIZE) {
-        throw new BadRequestException(
-          `File ${file.filePath} exceeds maximum size of 10MB`,
+        throw new AppException(
+          ErrorCode.FILE_SIZE_EXCEEDED,
+          HttpStatus.BAD_REQUEST,
+          {
+            path: file.filePath,
+            maxSize: '10MB',
+          },
         );
       }
     }

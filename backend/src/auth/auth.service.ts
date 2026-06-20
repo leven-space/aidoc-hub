@@ -1,8 +1,5 @@
-import {
-  Injectable,
-  BadRequestException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
+import { AppException, ErrorCode } from '../common/exceptions/app.exception';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../common/prisma/prisma.service';
@@ -40,28 +37,41 @@ export class AuthService {
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
     if (!(await this.systemService.isInitialized())) {
-      throw new BadRequestException(
-        'System not initialized. Please complete setup first.',
+      throw new AppException(
+        ErrorCode.SYSTEM_NOT_INITIALIZED,
+        HttpStatus.BAD_REQUEST,
       );
     }
 
     if (!(await this.systemService.isRegistrationEnabled())) {
-      throw new BadRequestException('Registration is disabled');
+      throw new AppException(
+        ErrorCode.REGISTRATION_DISABLED,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     if (!/^1[3-9]\d{9}$/.test(dto.phone)) {
-      throw new BadRequestException('Invalid phone number format');
+      throw new AppException(
+        ErrorCode.INVALID_PHONE_FORMAT,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     if (dto.password.length < 6) {
-      throw new BadRequestException('Password must be at least 6 characters');
+      throw new AppException(
+        ErrorCode.PASSWORD_TOO_SHORT,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const existing = await this.prisma.user.findUnique({
       where: { phone: dto.phone },
     });
     if (existing) {
-      throw new BadRequestException('Phone number already registered');
+      throw new AppException(
+        ErrorCode.PHONE_ALREADY_REGISTERED,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
@@ -98,12 +108,18 @@ export class AuthService {
       where: { phone: dto.phone },
     });
     if (!user) {
-      throw new UnauthorizedException('Invalid phone or password');
+      throw new AppException(
+        ErrorCode.INVALID_CREDENTIALS,
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) {
-      throw new UnauthorizedException('Invalid phone or password');
+      throw new AppException(
+        ErrorCode.INVALID_CREDENTIALS,
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     const token = this.generateToken(user.id);
@@ -126,7 +142,7 @@ export class AuthService {
       },
     });
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new AppException(ErrorCode.USER_NOT_FOUND, HttpStatus.UNAUTHORIZED);
     }
     return user;
   }

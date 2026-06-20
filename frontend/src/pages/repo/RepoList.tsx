@@ -20,7 +20,9 @@ import {
   FolderOpenOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { repoApi } from '../../services';
+import { getApiErrorMessage } from '../../utils/apiError';
 import type { Repository } from '../../types';
 
 interface RepoListProps {
@@ -29,6 +31,7 @@ interface RepoListProps {
 }
 
 export function RepoList({ workspaceId, isAdmin }: RepoListProps) {
+  const { t } = useTranslation();
   const [repos, setRepos] = useState<Repository[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
@@ -42,7 +45,7 @@ export function RepoList({ workspaceId, isAdmin }: RepoListProps) {
       const data = await repoApi.list(workspaceId);
       setRepos(data);
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '加载失败');
+      message.error(getApiErrorMessage(err, 'common.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -56,11 +59,11 @@ export function RepoList({ workspaceId, isAdmin }: RepoListProps) {
     setCreating(true);
     try {
       const repo = await repoApi.create(workspaceId, values);
-      message.success('仓库创建成功');
+      message.success(t('repo.createSuccess'));
       setModalOpen(false);
       navigate(`/workspaces/${workspaceId}/repos/${repo.id}`);
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '创建失败');
+      message.error(getApiErrorMessage(err, 'common.createFailed'));
     } finally {
       setCreating(false);
     }
@@ -68,12 +71,12 @@ export function RepoList({ workspaceId, isAdmin }: RepoListProps) {
 
   const handleDelete = (repoId: string, name: string) => {
     Modal.confirm({
-      title: '确认删除仓库',
-      content: `确定将「${name}」移入回收站？`,
+      title: t('repo.deleteConfirmTitle'),
+      content: t('repo.deleteConfirmContent', { name }),
       okType: 'danger',
       onOk: async () => {
         await repoApi.delete(workspaceId, repoId);
-        message.success('仓库已移入回收站');
+        message.success(t('repo.deleteSuccess'));
         load();
       },
     });
@@ -100,16 +103,16 @@ export function RepoList({ workspaceId, isAdmin }: RepoListProps) {
         />
         {isAdmin && (
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
-            创建仓库
+            {t('repo.create')}
           </Button>
         )}
       </div>
 
       {repos.length === 0 ? (
-        <Empty description="暂无仓库">
+        <Empty description={t('repo.empty')}>
           {isAdmin && (
             <Button type="primary" onClick={() => setModalOpen(true)}>
-              创建第一个仓库
+              {t('repo.createFirst')}
             </Button>
           )}
         </Empty>
@@ -131,7 +134,7 @@ export function RepoList({ workspaceId, isAdmin }: RepoListProps) {
                           }}
                           style={{ color: '#ff4d4f' }}
                         >
-                          删除
+                          {t('common.delete')}
                         </span>,
                       ]
                     : undefined
@@ -142,9 +145,9 @@ export function RepoList({ workspaceId, isAdmin }: RepoListProps) {
                   title={repo.name}
                   description={
                     <div>
-                      <div style={{ minHeight: 40 }}>{repo.description || '暂无描述'}</div>
+                      <div style={{ minHeight: 40 }}>{repo.description || t('common.noDescription')}</div>
                       <div style={{ fontSize: 12, color: '#999', marginTop: 8 }}>
-                        更新于 {new Date(repo.updatedAt).toLocaleDateString()}
+                        {t('common.updatedAt')} {new Date(repo.updatedAt).toLocaleDateString()}
                       </div>
                     </div>
                   }
@@ -162,10 +165,10 @@ export function RepoList({ workspaceId, isAdmin }: RepoListProps) {
             style: { cursor: 'pointer' },
           })}
           columns={[
-            { title: '名称', dataIndex: 'name', key: 'name' },
-            { title: '描述', dataIndex: 'description', key: 'description', ellipsis: true },
+            { title: t('repo.columnName'), dataIndex: 'name', key: 'name' },
+            { title: t('repo.columnDesc'), dataIndex: 'description', key: 'description', ellipsis: true },
             {
-              title: '更新时间',
+              title: t('repo.columnUpdated'),
               dataIndex: 'updatedAt',
               key: 'updatedAt',
               render: (v: string) => new Date(v).toLocaleString(),
@@ -173,7 +176,7 @@ export function RepoList({ workspaceId, isAdmin }: RepoListProps) {
             ...(isAdmin
               ? [
                   {
-                    title: '操作',
+                    title: t('repo.columnAction'),
                     key: 'action',
                     render: (_: unknown, record: Repository) => (
                       <Button
@@ -185,7 +188,7 @@ export function RepoList({ workspaceId, isAdmin }: RepoListProps) {
                           handleDelete(record.id, record.name);
                         }}
                       >
-                        删除
+                        {t('common.delete')}
                       </Button>
                     ),
                   },
@@ -196,7 +199,7 @@ export function RepoList({ workspaceId, isAdmin }: RepoListProps) {
       )}
 
       <Modal
-        title="创建仓库"
+        title={t('repo.createModalTitle')}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         footer={null}
@@ -205,20 +208,20 @@ export function RepoList({ workspaceId, isAdmin }: RepoListProps) {
         <Form layout="vertical" onFinish={handleCreate}>
           <Form.Item
             name="name"
-            label="仓库名称"
-            rules={[{ required: true, message: '请输入仓库名称' }]}
+            label={t('repo.name')}
+            rules={[{ required: true, message: t('validation.repoNameRequired') }]}
           >
-            <Input placeholder="例如：产品说明书" />
+            <Input placeholder={t('repo.namePlaceholder')} />
           </Form.Item>
-          <Form.Item name="description" label="描述">
-            <Input.TextArea rows={3} placeholder="简要描述仓库用途" />
+          <Form.Item name="description" label={t('repo.description')}>
+            <Input.TextArea rows={3} placeholder={t('repo.descPlaceholder')} />
           </Form.Item>
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
             <Button onClick={() => setModalOpen(false)} style={{ marginRight: 8 }}>
-              取消
+              {t('common.cancel')}
             </Button>
             <Button type="primary" htmlType="submit" loading={creating}>
-              创建
+              {t('common.create')}
             </Button>
           </Form.Item>
         </Form>

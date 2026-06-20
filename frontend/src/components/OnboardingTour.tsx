@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Tour, type TourProps } from 'antd';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 
 const STORAGE_PREFIX = 'onboarding.completed.';
@@ -13,6 +14,7 @@ export function OnboardingTourHost() {
   const { user } = useAuth();
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
 
   const markCompleted = () => {
     if (user?.id) {
@@ -40,32 +42,32 @@ export function OnboardingTourHost() {
   const steps: TourProps['steps'] = useMemo(
     () => [
       {
-        title: '工作空间',
-        description: '在这里创建和管理工作空间，每个空间可包含多个 HTML 资产仓库。',
+        title: t('tour.workspaceTitle'),
+        description: t('tour.workspaceDesc'),
         target: () => document.querySelector('[data-tour="nav-workspaces"]') as HTMLElement,
       },
       {
-        title: '全局搜索',
-        description: '快速搜索工作空间、仓库和文件，跨空间定位内容。',
+        title: t('tour.searchTitle'),
+        description: t('tour.searchDesc'),
         target: () => document.querySelector('[data-tour="global-search"]') as HTMLElement,
       },
       {
-        title: 'Token 管理',
-        description: '创建 Personal Access Token，用于 API 与 MCP 接入鉴权。',
+        title: t('tour.tokenTitle'),
+        description: t('tour.tokenDesc'),
         target: () => document.querySelector('[data-tour="nav-tokens"]') as HTMLElement,
       },
       {
-        title: 'MCP 接入',
-        description: '获取自动生成的配置与 Prompt，发给 Cursor / Claude Code / Codex 即可快速接入。',
+        title: t('tour.mcpTitle'),
+        description: t('tour.mcpDesc'),
         target: () => document.querySelector('[data-tour="nav-mcp"]') as HTMLElement,
       },
       {
-        title: '新手引导',
-        description: '随时点击此按钮重新查看功能引导。',
+        title: t('tour.helpTitle'),
+        description: t('tour.helpDesc'),
         target: () => document.querySelector('[data-tour="help-button"]') as HTMLElement,
       },
     ],
-    [],
+    [t],
   );
 
   return (

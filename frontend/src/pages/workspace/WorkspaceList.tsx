@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react';
 import { Card, Row, Col, Tag, Button, Modal, Form, Input, Empty, Spin, message } from 'antd';
 import { PlusOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageContainer } from '../../components/PageContainer';
 import { workspaceApi } from '../../services';
+import { getApiErrorMessage } from '../../utils/apiError';
 import type { Workspace } from '../../types';
 
 export function WorkspaceList() {
+  const { t } = useTranslation();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -19,7 +22,7 @@ export function WorkspaceList() {
       const data = await workspaceApi.list();
       setWorkspaces(data);
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '加载失败');
+      message.error(getApiErrorMessage(err, 'common.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -33,11 +36,11 @@ export function WorkspaceList() {
     setCreating(true);
     try {
       const ws = await workspaceApi.create(values);
-      message.success('空间创建成功');
+      message.success(t('workspace.createSuccess'));
       setModalOpen(false);
       navigate(`/workspaces/${ws.id}`);
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '创建失败');
+      message.error(getApiErrorMessage(err, 'common.createFailed'));
     } finally {
       setCreating(false);
     }
@@ -53,18 +56,18 @@ export function WorkspaceList() {
 
   return (
     <PageContainer
-      title="工作空间"
-      subtitle="管理您的文档协作空间"
+      title={t('workspace.title')}
+      subtitle={t('workspace.subtitle')}
       extra={
         <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
-          创建空间
+          {t('workspace.create')}
         </Button>
       }
     >
       {workspaces.length === 0 ? (
-        <Empty description="暂无工作空间">
+        <Empty description={t('workspace.empty')}>
           <Button type="primary" onClick={() => setModalOpen(true)}>
-            创建第一个空间
+            {t('workspace.createFirst')}
           </Button>
         </Empty>
       ) : (
@@ -89,19 +92,22 @@ export function WorkspaceList() {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                     {isTeam ? <TeamOutlined style={{ fontSize: 20, color: '#1677ff' }} /> : <UserOutlined style={{ fontSize: 20, color: '#52c41a' }} />}
-                    <Tag color={isTeam ? 'blue' : 'green'}>{isTeam ? '团队空间' : '个人空间'}</Tag>
+                    <Tag color={isTeam ? 'blue' : 'green'}>{isTeam ? t('workspace.teamSpace') : t('workspace.personalSpace')}</Tag>
                   </div>
                   <Card.Meta
                     title={ws.name}
                     description={
                       <div>
                         <div style={{ marginBottom: 8, minHeight: 40 }}>
-                          {ws.description || '暂无描述'}
+                          {ws.description || t('common.noDescription')}
                         </div>
                         <div style={{ fontSize: 12, color: '#999' }}>
-                          {ws._count?.members || 0} 成员 · {ws._count?.repositories || 0} 仓库
+                          {t('common.membersRepos', {
+                            members: ws._count?.members || 0,
+                            repos: ws._count?.repositories || 0,
+                          })}
                           <br />
-                          更新于 {new Date(ws.updatedAt).toLocaleDateString()}
+                          {t('common.updatedAt')} {new Date(ws.updatedAt).toLocaleDateString()}
                         </div>
                       </div>
                     }
@@ -114,7 +120,7 @@ export function WorkspaceList() {
       )}
 
       <Modal
-        title="创建团队空间"
+        title={t('workspace.createModalTitle')}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         footer={null}
@@ -123,20 +129,20 @@ export function WorkspaceList() {
         <Form layout="vertical" onFinish={handleCreate}>
           <Form.Item
             name="name"
-            label="空间名称"
-            rules={[{ required: true, message: '请输入空间名称' }]}
+            label={t('workspace.name')}
+            rules={[{ required: true, message: t('validation.workspaceNameRequired') }]}
           >
-            <Input placeholder="例如：产品文档团队" />
+            <Input placeholder={t('workspace.namePlaceholder')} />
           </Form.Item>
-          <Form.Item name="description" label="描述">
-            <Input.TextArea rows={3} placeholder="简要描述空间用途" />
+          <Form.Item name="description" label={t('workspace.description')}>
+            <Input.TextArea rows={3} placeholder={t('workspace.descPlaceholder')} />
           </Form.Item>
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
             <Button onClick={() => setModalOpen(false)} style={{ marginRight: 8 }}>
-              取消
+              {t('common.cancel')}
             </Button>
             <Button type="primary" htmlType="submit" loading={creating}>
-              创建
+              {t('common.create')}
             </Button>
           </Form.Item>
         </Form>

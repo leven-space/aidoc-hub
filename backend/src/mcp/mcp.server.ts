@@ -1,4 +1,5 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
+import { AppException, ErrorCode } from '../common/exceptions/app.exception';
 import { WorkspaceService } from '../workspace/workspace.service';
 import { RepoService } from '../repo/repo.service';
 import { GitService } from '../git/git.service';
@@ -237,7 +238,10 @@ ${toolDocs}
 
       case 'write_file':
         if (options?.tokenScope === 'READ') {
-          throw new ForbiddenException('Token does not have write permission');
+          throw new AppException(
+            ErrorCode.TOKEN_WRITE_PERMISSION_REQUIRED,
+            HttpStatus.FORBIDDEN,
+          );
         }
         await this.workspaceService.checkEditor(args.workspaceId, userId);
         return this.gitService.commitFiles(

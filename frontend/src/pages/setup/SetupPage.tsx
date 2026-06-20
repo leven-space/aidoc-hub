@@ -11,8 +11,10 @@ import {
 } from 'antd';
 import { LockOutlined, MobileOutlined, UserOutlined, GlobalOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { setupApi } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 type SetupFormValues = {
   phone: string;
@@ -29,6 +31,7 @@ export function SetupPage() {
   const [form] = Form.useForm<SetupFormValues>();
   const navigate = useNavigate();
   const { loginWithToken } = useAuth();
+  const { t } = useTranslation();
 
   const onFinish = async (values: SetupFormValues) => {
     setLoading(true);
@@ -41,10 +44,10 @@ export function SetupPage() {
         publicApiUrl: values.publicApiUrl,
       });
       loginWithToken(res.accessToken, res.user);
-      message.success('系统初始化完成');
+      message.success(t('setup.initSuccess'));
       navigate('/', { replace: true, state: { showOnboarding: true } });
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '初始化失败');
+      message.error(getApiErrorMessage(err, 'setup.initFailed'));
     } finally {
       setLoading(false);
     }
@@ -63,24 +66,24 @@ export function SetupPage() {
     >
       <Card style={{ width: 520, boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
         <Typography.Title level={3} style={{ textAlign: 'center', marginBottom: 8 }}>
-          欢迎使用 AI Doc Hub
+          {t('setup.welcome')}
         </Typography.Title>
         <Typography.Paragraph type="secondary" style={{ textAlign: 'center', marginBottom: 24 }}>
-          首次部署请创建系统管理员并配置对外访问地址
+          {t('setup.subtitle')}
         </Typography.Paragraph>
 
         <Steps
           current={step}
           size="small"
           style={{ marginBottom: 24 }}
-          items={[{ title: '管理员账号' }, { title: '系统配置' }]}
+          items={[{ title: t('setup.stepAdmin') }, { title: t('setup.stepConfig') }]}
         />
 
         <Alert
           type="info"
           showIcon
           style={{ marginBottom: 16 }}
-          message="系统管理员可配置 MCP 公网地址、站点名称及是否允许公开注册"
+          message={t('setup.adminAlert')}
         />
 
         <Form
@@ -89,49 +92,49 @@ export function SetupPage() {
           size="large"
           onFinish={onFinish}
           initialValues={{
-            siteName: 'AI Doc Hub',
+            siteName: t('common.appName'),
             publicApiUrl: window.location.origin,
           }}
         >
           {step === 0 && (
             <>
               <Form.Item name="name">
-                <Input prefix={<UserOutlined />} placeholder="管理员姓名（可选）" />
+                <Input prefix={<UserOutlined />} placeholder={t('setup.adminName')} />
               </Form.Item>
               <Form.Item
                 name="phone"
                 rules={[
-                  { required: true, message: '请输入手机号' },
-                  { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号' },
+                  { required: true, message: t('validation.phoneRequired') },
+                  { pattern: /^1[3-9]\d{9}$/, message: t('validation.phoneInvalid') },
                 ]}
               >
-                <Input prefix={<MobileOutlined />} placeholder="管理员手机号" maxLength={11} />
+                <Input prefix={<MobileOutlined />} placeholder={t('setup.adminPhone')} maxLength={11} />
               </Form.Item>
               <Form.Item
                 name="password"
                 rules={[
-                  { required: true, message: '请输入密码' },
-                  { min: 6, message: '密码至少 6 位' },
+                  { required: true, message: t('validation.passwordRequired') },
+                  { min: 6, message: t('validation.passwordMin') },
                 ]}
               >
-                <Input.Password prefix={<LockOutlined />} placeholder="登录密码" />
+                <Input.Password prefix={<LockOutlined />} placeholder={t('setup.loginPassword')} />
               </Form.Item>
               <Form.Item
                 name="confirm"
                 dependencies={['password']}
                 rules={[
-                  { required: true, message: '请确认密码' },
+                  { required: true, message: t('validation.confirmPasswordRequired') },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
                       if (!value || getFieldValue('password') === value) {
                         return Promise.resolve();
                       }
-                      return Promise.reject(new Error('两次密码不一致'));
+                      return Promise.reject(new Error(t('validation.passwordMismatch')));
                     },
                   }),
                 ]}
               >
-                <Input.Password prefix={<LockOutlined />} placeholder="确认密码" />
+                <Input.Password prefix={<LockOutlined />} placeholder={t('auth.confirmPassword')} />
               </Form.Item>
               <Button
                 type="primary"
@@ -143,7 +146,7 @@ export function SetupPage() {
                     .catch(() => {});
                 }}
               >
-                下一步
+                {t('common.next')}
               </Button>
             </>
           )}
@@ -152,28 +155,28 @@ export function SetupPage() {
             <>
               <Form.Item
                 name="siteName"
-                label="站点名称"
-                rules={[{ required: true, message: '请输入站点名称' }]}
+                label={t('setup.siteName')}
+                rules={[{ required: true, message: t('validation.siteNameRequired') }]}
               >
-                <Input placeholder="AI Doc Hub" />
+                <Input placeholder={t('common.appName')} />
               </Form.Item>
               <Form.Item
                 name="publicApiUrl"
-                label="对外 API 地址"
-                extra="供 MCP 与外部 AI 客户端访问的公网地址，不含 /api 后缀"
+                label={t('setup.publicApiUrl')}
+                extra={t('setup.apiUrlExtra')}
                 rules={[
-                  { required: true, message: '请输入对外 API 地址' },
-                  { type: 'url', message: '请输入有效的 URL' },
+                  { required: true, message: t('validation.apiUrlRequired') },
+                  { type: 'url', message: t('validation.urlInvalid') },
                 ]}
               >
                 <Input prefix={<GlobalOutlined />} placeholder="https://docs.example.com" />
               </Form.Item>
               <div style={{ display: 'flex', gap: 8 }}>
                 <Button block onClick={() => setStep(0)}>
-                  上一步
+                  {t('common.prev')}
                 </Button>
                 <Button type="primary" htmlType="submit" loading={loading} block>
-                  完成初始化
+                  {t('setup.finishInit')}
                 </Button>
               </div>
             </>

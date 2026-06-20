@@ -2,9 +2,10 @@ import {
   Injectable,
   CanActivate,
   ExecutionContext,
-  ForbiddenException,
+  HttpStatus,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { AppException, ErrorCode } from '../exceptions/app.exception';
 import { PrismaService } from '../prisma/prisma.service';
 
 export const ROLES_KEY = 'roles';
@@ -29,7 +30,10 @@ export class WorkspaceAuthGuard implements CanActivate {
     const workspaceId = request.params.workspaceId || request.params.id;
 
     if (!userId || !workspaceId) {
-      throw new ForbiddenException('Workspace access denied');
+      throw new AppException(
+        ErrorCode.WORKSPACE_ACCESS_DENIED,
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     const member = await this.prisma.workspaceMember.findUnique({
@@ -37,12 +41,18 @@ export class WorkspaceAuthGuard implements CanActivate {
     });
 
     if (!member) {
-      throw new ForbiddenException('Not a member of this workspace');
+      throw new AppException(
+        ErrorCode.WORKSPACE_NOT_MEMBER,
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     const hasRole = requiredRoles.includes(member.role);
     if (!hasRole) {
-      throw new ForbiddenException('Insufficient workspace permissions');
+      throw new AppException(
+        ErrorCode.WORKSPACE_INSUFFICIENT_PERMISSION,
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     return true;

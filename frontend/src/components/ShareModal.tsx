@@ -13,7 +13,9 @@ import {
   Typography,
 } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { shareApi } from '../services';
+import { getApiErrorMessage } from '../utils/apiError';
 import type { VersionInfo } from '../types';
 
 interface ShareModalProps {
@@ -25,6 +27,7 @@ interface ShareModalProps {
 }
 
 export function ShareModal({ open, onClose, workspaceId, repoId, versions }: ShareModalProps) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
   const [shareType, setShareType] = useState<'VIEW_ONLY' | 'SOURCE_ACCESS'>('VIEW_ONLY');
@@ -45,9 +48,9 @@ export function ShareModal({ open, onClose, workspaceId, repoId, versions }: Sha
       });
       const fullUrl = `${window.location.origin}${result.url}`;
       setShareUrl(fullUrl);
-      message.success('分享链接已创建');
+      message.success(t('share.linkCreated'));
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '创建失败');
+      message.error(getApiErrorMessage(err, 'share.createFailed'));
     } finally {
       setLoading(false);
     }
@@ -55,7 +58,7 @@ export function ShareModal({ open, onClose, workspaceId, repoId, versions }: Sha
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);
-    message.success('已复制到剪贴板');
+    message.success(t('share.copied'));
   };
 
   const handleClose = () => {
@@ -65,18 +68,16 @@ export function ShareModal({ open, onClose, workspaceId, repoId, versions }: Sha
   };
 
   const typeDescription =
-    shareType === 'VIEW_ONLY'
-      ? '接收者只能在线预览 HTML 内容，无法查看或下载源码。'
-      : '接收者可以查看 HTML 源码并进行协同编辑提交。';
+    shareType === 'VIEW_ONLY' ? t('share.previewDesc') : t('share.sourceDesc');
 
   return (
-    <Modal title="分享仓库" open={open} onCancel={handleClose} footer={null} width={520} destroyOnHidden>
+    <Modal title={t('share.modalTitle')} open={open} onCancel={handleClose} footer={null} width={520} destroyOnHidden>
       {shareUrl ? (
         <div>
           <Alert
             type="success"
-            message="分享链接已生成"
-            description="请复制链接发送给协作者"
+            message={t('share.linkGenerated')}
+            description={t('share.copyHint')}
             style={{ marginBottom: 16 }}
           />
           <Input
@@ -84,13 +85,13 @@ export function ShareModal({ open, onClose, workspaceId, repoId, versions }: Sha
             readOnly
             addonAfter={
               <Button type="text" icon={<CopyOutlined />} onClick={handleCopy}>
-                复制
+                {t('common.copy')}
               </Button>
             }
           />
           <div style={{ marginTop: 16, textAlign: 'right' }}>
             <Button type="primary" onClick={handleClose}>
-              完成
+              {t('common.done')}
             </Button>
           </div>
         </div>
@@ -100,8 +101,8 @@ export function ShareModal({ open, onClose, workspaceId, repoId, versions }: Sha
             activeKey={shareType}
             onChange={(k) => setShareType(k as 'VIEW_ONLY' | 'SOURCE_ACCESS')}
             items={[
-              { key: 'VIEW_ONLY', label: '仅预览查看' },
-              { key: 'SOURCE_ACCESS', label: '可编辑源码' },
+              { key: 'VIEW_ONLY', label: t('share.tabPreview') },
+              { key: 'SOURCE_ACCESS', label: t('share.tabSource') },
             ]}
           />
           <Typography.Paragraph type="secondary">{typeDescription}</Typography.Paragraph>
@@ -111,21 +112,21 @@ export function ShareModal({ open, onClose, workspaceId, repoId, versions }: Sha
               items={[
                 {
                   key: 'advanced',
-                  label: '高级设置',
+                  label: t('share.advanced'),
                   children: (
                     <>
-                      <Form.Item name="password" label="访问密码">
-                        <Input.Password placeholder="可选，设置后访问需输入密码" />
+                      <Form.Item name="password" label={t('share.password')}>
+                        <Input.Password placeholder={t('share.passwordPlaceholder')} />
                       </Form.Item>
-                      <Form.Item name="expiresAt" label="有效期">
-                        <DatePicker showTime style={{ width: '100%' }} placeholder="可选" />
+                      <Form.Item name="expiresAt" label={t('share.expires')}>
+                        <DatePicker showTime style={{ width: '100%' }} placeholder={t('share.optional')} />
                       </Form.Item>
-                      <Form.Item name="maxVisits" label="最大访问次数">
-                        <InputNumber min={1} style={{ width: '100%' }} placeholder="可选" />
+                      <Form.Item name="maxVisits" label={t('share.maxVisits')}>
+                        <InputNumber min={1} style={{ width: '100%' }} placeholder={t('share.optional')} />
                       </Form.Item>
                       {versions && versions.length > 0 && (
-                        <Form.Item name="version" label="指定版本">
-                          <Input placeholder="可选，留空则分享最新版本" />
+                        <Form.Item name="version" label={t('share.version')}>
+                          <Input placeholder={t('share.versionPlaceholder')} />
                         </Form.Item>
                       )}
                     </>
@@ -135,10 +136,10 @@ export function ShareModal({ open, onClose, workspaceId, repoId, versions }: Sha
             />
             <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
               <Button onClick={handleClose} style={{ marginRight: 8 }}>
-                取消
+                {t('common.cancel')}
               </Button>
               <Button type="primary" loading={loading} onClick={handleCreate}>
-                生成链接
+                {t('share.generateLink')}
               </Button>
             </Form.Item>
           </Form>

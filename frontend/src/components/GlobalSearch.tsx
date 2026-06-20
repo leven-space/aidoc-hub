@@ -2,46 +2,8 @@ import { useState, useCallback } from 'react';
 import { AutoComplete, Typography } from 'antd';
 import { TeamOutlined, FolderOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { workspaceApi, repoApi } from '../services';
-import type { SearchResult } from '../types';
-
-let cachedWorkspaces: SearchResult[] | null = null;
-
-async function fetchSearchData(): Promise<SearchResult[]> {
-  if (cachedWorkspaces) return cachedWorkspaces;
-
-  const workspaces = await workspaceApi.list();
-  const results: SearchResult[] = [];
-
-  for (const ws of workspaces) {
-    results.push({
-      type: 'workspace',
-      id: ws.id,
-      name: ws.name,
-    });
-    try {
-      const repos = await repoApi.list(ws.id);
-      repos.forEach((repo) => {
-        results.push({
-          type: 'repo',
-          id: repo.id,
-          name: repo.name,
-          workspaceId: ws.id,
-          workspaceName: ws.name,
-        });
-      });
-    } catch {
-      // skip inaccessible repos
-    }
-  }
-
-  cachedWorkspaces = results;
-  return results;
-}
-
-export function invalidateSearchCache() {
-  cachedWorkspaces = null;
-}
+import { useTranslation } from 'react-i18next';
+import { fetchSearchData } from '../utils/searchCache';
 
 function highlightMatch(text: string, query: string) {
   if (!query) return text;
@@ -60,6 +22,7 @@ export function GlobalSearch() {
   const [options, setOptions] = useState<{ value: string; label: React.ReactNode }[]>([]);
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSearch = useCallback(async (value: string) => {
     setQuery(value);
@@ -123,7 +86,7 @@ export function GlobalSearch() {
       style={{ width: 280 }}
     >
       <input
-        placeholder="搜索空间、仓库..."
+        placeholder={t('search.placeholder')}
         style={{
           width: '100%',
           padding: '4px 11px 4px 32px',

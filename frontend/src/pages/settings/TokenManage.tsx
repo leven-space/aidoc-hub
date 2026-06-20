@@ -14,15 +14,11 @@ import {
   Popconfirm,
 } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageContainer } from '../../components/PageContainer';
 import { tokenApi } from '../../services';
+import { getApiErrorMessage } from '../../utils/apiError';
 import type { AccessToken } from '../../types';
-
-const scopeLabels: Record<string, string> = {
-  READ: '只读',
-  READ_WRITE: '读写',
-};
 
 type TokenFormValues = {
   name: string;
@@ -31,6 +27,7 @@ type TokenFormValues = {
 };
 
 export function TokenManage() {
+  const { t } = useTranslation();
   const [tokens, setTokens] = useState<AccessToken[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -40,13 +37,19 @@ export function TokenManage() {
   const [draft, setDraft] = useState<TokenFormValues | null>(null);
   const [form] = Form.useForm();
 
+  const scopeLabel = (scope: string) => {
+    if (scope === 'READ') return t('token.scopeReadLabel');
+    if (scope === 'READ_WRITE') return t('token.scopeReadWriteLabel');
+    return scope;
+  };
+
   const load = async () => {
     setLoading(true);
     try {
       const data = await tokenApi.list();
       setTokens(data);
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '加载失败');
+      message.error(getApiErrorMessage(err, 'common.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -68,7 +71,7 @@ export function TokenManage() {
       setStep(2);
       load();
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '创建失败');
+      message.error(getApiErrorMessage(err, 'common.createFailed'));
     } finally {
       setCreating(false);
     }
@@ -77,10 +80,10 @@ export function TokenManage() {
   const handleRevoke = async (id: string) => {
     try {
       await tokenApi.revoke(id);
-      message.success('Token 已吊销');
+      message.success(t('token.revokeSuccess'));
       load();
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '吊销失败');
+      message.error(getApiErrorMessage(err, 'token.revokeFailed'));
     }
   };
 
@@ -93,44 +96,44 @@ export function TokenManage() {
   };
 
   const columns = [
-    { title: '名称', dataIndex: 'name', key: 'name' },
+    { title: t('token.columnName'), dataIndex: 'name', key: 'name' },
     {
-      title: '权限范围',
+      title: t('token.columnScope'),
       dataIndex: 'scope',
       key: 'scope',
-      render: (scope: string) => <Tag>{scopeLabels[scope] || scope}</Tag>,
+      render: (scope: string) => <Tag>{scopeLabel(scope)}</Tag>,
     },
     {
-      title: '有效期',
+      title: t('token.columnExpires'),
       dataIndex: 'expiresAt',
       key: 'expiresAt',
-      render: (v: string | null) => (v ? new Date(v).toLocaleString() : '永久'),
+      render: (v: string | null) => (v ? new Date(v).toLocaleString() : t('token.statusPermanent')),
     },
     {
-      title: '状态',
+      title: t('token.columnStatus'),
       key: 'status',
       render: (_: unknown, record: AccessToken) => {
-        if (record.isRevoked) return <Tag color="red">已吊销</Tag>;
+        if (record.isRevoked) return <Tag color="red">{t('token.statusRevoked')}</Tag>;
         if (record.expiresAt && new Date(record.expiresAt) < new Date()) {
-          return <Tag color="orange">已过期</Tag>;
+          return <Tag color="orange">{t('token.statusExpired')}</Tag>;
         }
-        return <Tag color="green">有效</Tag>;
+        return <Tag color="green">{t('token.statusActive')}</Tag>;
       },
     },
     {
-      title: '创建时间',
+      title: t('token.columnCreated'),
       dataIndex: 'createdAt',
       key: 'createdAt',
       render: (v: string) => new Date(v).toLocaleString(),
     },
     {
-      title: '操作',
+      title: t('token.columnAction'),
       key: 'action',
       render: (_: unknown, record: AccessToken) =>
         !record.isRevoked ? (
-          <Popconfirm title="确认吊销此 Token？" onConfirm={() => handleRevoke(record.id)}>
+          <Popconfirm title={t('token.revokeConfirm')} onConfirm={() => handleRevoke(record.id)}>
             <Button type="link" danger size="small">
-              吊销
+              {t('token.revoke')}
             </Button>
           </Popconfirm>
         ) : null,
@@ -139,28 +142,19 @@ export function TokenManage() {
 
   return (
     <PageContainer
-      title="Access Token 管理"
-      subtitle="用于 MCP 和 API 接入的个人访问令牌"
+      title={t('token.title')}
+      subtitle={t('token.subtitle')}
       extra={
         <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
-          创建 Token
+          {t('token.create')}
         </Button>
       }
     >
-      <Alert
-        type="info"
-        showIcon
-        style={{ marginBottom: 16 }}
-        message={
-          <span>
-            创建 Token 后，前往 <Link to="/settings/mcp">MCP 接入配置</Link> 获取 Cursor / Claude Code 配置说明
-          </span>
-        }
-      />
+      <Alert type="info" showIcon style={{ marginBottom: 16 }} message={t('token.alertMcp')} />
       <Table rowKey="id" columns={columns} dataSource={tokens} loading={loading} />
 
       <Modal
-        title="创建 Access Token"
+        title={t('token.createModalTitle')}
         open={modalOpen}
         onCancel={handleCloseModal}
         footer={null}
@@ -171,7 +165,11 @@ export function TokenManage() {
           current={step}
           size="small"
           style={{ marginBottom: 24 }}
-          items={[{ title: '基本信息' }, { title: '确认' }, { title: '完成' }]}
+          items={[
+            { title: t('token.stepBasic') },
+            { title: t('token.stepConfirm') },
+            { title: t('token.stepDone') },
+          ]}
         />
 
         {step === 0 && (
@@ -186,28 +184,28 @@ export function TokenManage() {
           >
             <Form.Item
               name="name"
-              label="Token 名称"
-              rules={[{ required: true, message: '请输入名称' }]}
+              label={t('token.name')}
+              rules={[{ required: true, message: t('validation.nameRequired') }]}
             >
-              <Input placeholder="例如：MCP 开发环境" />
+              <Input placeholder={t('token.namePlaceholder')} />
             </Form.Item>
-            <Form.Item name="scope" label="权限范围" rules={[{ required: true }]}>
+            <Form.Item name="scope" label={t('token.scope')} rules={[{ required: true }]}>
               <Select
                 options={[
-                  { label: '只读 (READ)', value: 'READ' },
-                  { label: '读写 (READ_WRITE)', value: 'READ_WRITE' },
+                  { label: t('token.scopeRead'), value: 'READ' },
+                  { label: t('token.scopeReadWrite'), value: 'READ_WRITE' },
                 ]}
               />
             </Form.Item>
-            <Form.Item name="expiresAt" label="有效期">
-              <DatePicker showTime style={{ width: '100%' }} placeholder="留空则永久有效" />
+            <Form.Item name="expiresAt" label={t('token.expires')}>
+              <DatePicker showTime style={{ width: '100%' }} placeholder={t('token.expiresPlaceholder')} />
             </Form.Item>
             <Form.Item style={{ textAlign: 'right', marginBottom: 0 }}>
               <Button onClick={handleCloseModal} style={{ marginRight: 8 }}>
-                取消
+                {t('common.cancel')}
               </Button>
               <Button type="primary" htmlType="submit">
-                下一步
+                {t('common.next')}
               </Button>
             </Form.Item>
           </Form>
@@ -215,14 +213,18 @@ export function TokenManage() {
 
         {step === 1 && (
           <div>
-            <p>请确认 Token 配置信息：</p>
+            <p>{t('token.confirmInfo')}</p>
             <ul>
-              <li>名称：{draft?.name}</li>
-              <li>权限：{scopeLabels[draft?.scope ?? '']}</li>
+              <li>
+                {t('token.confirmName')} {draft?.name}
+              </li>
+              <li>
+                {t('token.confirmScope')} {scopeLabel(draft?.scope ?? '')}
+              </li>
             </ul>
             <div style={{ textAlign: 'right' }}>
               <Button onClick={() => setStep(0)} style={{ marginRight: 8 }}>
-                上一步
+                {t('common.prev')}
               </Button>
               <Button
                 type="primary"
@@ -230,7 +232,7 @@ export function TokenManage() {
                 disabled={!draft}
                 onClick={() => draft && handleCreate(draft)}
               >
-                创建
+                {t('common.create')}
               </Button>
             </div>
           </div>
@@ -240,8 +242,8 @@ export function TokenManage() {
           <div>
             <Alert
               type="warning"
-              message="请立即复制 Token"
-              description="Token 明文仅显示一次，关闭后将无法再次查看。"
+              message={t('token.alertCopyOnce')}
+              description={t('token.alertCopyOnceDetail')}
               style={{ marginBottom: 16 }}
             />
             <Input.TextArea value={plaintext} readOnly rows={3} />
@@ -250,13 +252,13 @@ export function TokenManage() {
                 type="primary"
                 onClick={() => {
                   navigator.clipboard.writeText(plaintext);
-                  message.success('已复制');
+                  message.success(t('token.copySuccess'));
                 }}
                 style={{ marginRight: 8 }}
               >
-                复制 Token
+                {t('token.copyToken')}
               </Button>
-              <Button onClick={handleCloseModal}>完成</Button>
+              <Button onClick={handleCloseModal}>{t('common.done')}</Button>
             </div>
           </div>
         )}

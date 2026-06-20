@@ -1,5 +1,6 @@
 import { Card, Tabs, Select, Typography, Space, Button } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { PageContainer } from '../components/PageContainer';
 
 import { repoApi } from '../services';
@@ -42,6 +43,7 @@ export function VersionDiff({
   onSelectVersions,
   onBack,
 }: VersionDiffProps) {
+  const { t } = useTranslation();
   const fromVersion = data?.fromVersion ?? '';
   const toVersion = data?.toVersion ?? '';
 
@@ -74,11 +76,11 @@ export function VersionDiff({
 
   return (
     <PageContainer
-      title="版本对比"
+      title={t('version.compare')}
       extra={
         onBack && (
           <Button icon={<ArrowLeftOutlined />} onClick={onBack}>
-            返回版本历史
+            {t('version.backToHistory')}
           </Button>
         )
       }
@@ -86,7 +88,7 @@ export function VersionDiff({
       <Card style={{ marginBottom: 16 }}>
         <Space size={16} wrap>
           <Select
-            placeholder="选择基准版本"
+            placeholder={t('version.selectBase')}
             style={{ width: 240 }}
             value={fromVersion || undefined}
             onChange={handleFromChange}
@@ -95,9 +97,9 @@ export function VersionDiff({
               value: v.oid,
             }))}
           />
-          <Typography.Text type="secondary">对比</Typography.Text>
+          <Typography.Text type="secondary">{t('version.compareLabel')}</Typography.Text>
           <Select
-            placeholder="选择对比版本"
+            placeholder={t('version.selectTarget')}
             style={{ width: 240 }}
             value={toVersion || undefined}
             onChange={handleToChange}
@@ -108,9 +110,9 @@ export function VersionDiff({
           />
           {files && files.length > 1 && onFileChange && (
             <>
-              <Typography.Text type="secondary">文件</Typography.Text>
+              <Typography.Text type="secondary">{t('version.fileLabel')}</Typography.Text>
               <Select
-                placeholder="选择对比文件"
+                placeholder={t('version.selectFile')}
                 style={{ width: 240 }}
                 value={selectedFile || data?.filePath}
                 onChange={onFileChange}
@@ -126,7 +128,7 @@ export function VersionDiff({
           items={[
             {
               key: 'source',
-              label: '源码对比',
+              label: t('version.sourceDiff'),
               children: (
                 <Card>
                   <div
@@ -181,10 +183,10 @@ export function VersionDiff({
             },
             {
               key: 'preview',
-              label: '预览对比',
+              label: t('version.previewDiff'),
               children: (
                 <div style={{ display: 'flex', gap: 16 }}>
-                  <Card title={`From: ${data.fromVersion.substring(0, 8)}`} style={{ flex: 1 }}>
+                  <Card title={t('version.fromVersion', { oid: data.fromVersion.substring(0, 8) })} style={{ flex: 1 }}>
                     <iframe
                       src={fromPreviewUrl}
                       srcDoc={fromPreviewUrl ? undefined : data.fromContent}
@@ -196,7 +198,7 @@ export function VersionDiff({
                       }}
                     />
                   </Card>
-                  <Card title={`To: ${data.toVersion.substring(0, 8)}`} style={{ flex: 1 }}>
+                  <Card title={t('version.toVersion', { oid: data.toVersion.substring(0, 8) })} style={{ flex: 1 }}>
                     <iframe
                       src={toPreviewUrl}
                       srcDoc={toPreviewUrl ? undefined : data.toContent}

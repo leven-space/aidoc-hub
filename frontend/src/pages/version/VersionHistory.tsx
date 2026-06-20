@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card, Timeline, Button, Tag, Typography, Space, Modal, Empty } from 'antd';
 import { ClockCircleOutlined, UserOutlined, RollbackOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { PageContainer } from '../../components/PageContainer';
 import type { VersionInfo } from '../../types';
 
@@ -12,6 +13,7 @@ interface VersionHistoryProps {
 }
 
 export function VersionHistory({ versions, canRestore, onRestore, onDiff }: VersionHistoryProps) {
+  const { t } = useTranslation();
   const [selectedVersions, setSelectedVersions] = useState<string[]>([]);
 
   const handleSelect = (oid: string) => {
@@ -39,25 +41,25 @@ export function VersionHistory({ versions, canRestore, onRestore, onDiff }: Vers
 
   const handleRestore = (oid: string) => {
     Modal.confirm({
-      title: '确认恢复',
-      content: '恢复此版本将生成一个新的提交，不会删除任何历史版本。确认继续？',
+      title: t('version.restoreConfirmTitle'),
+      content: t('version.restoreConfirmContent'),
       onOk: () => onRestore?.(oid),
     });
   };
 
   return (
     <PageContainer
-      title="版本历史"
+      title={t('version.history')}
       extra={
         selectedVersions.length === 2 && (
           <Button type="primary" onClick={handleCompare}>
-            对比选中版本
+            {t('version.compareSelected')}
           </Button>
         )
       }
     >
       {versions.length === 0 ? (
-        <Empty description="暂无版本记录" />
+        <Empty description={t('version.empty')} />
       ) : (
         <Timeline
           items={versions.map((v) => ({
@@ -105,7 +107,7 @@ export function VersionHistory({ versions, canRestore, onRestore, onDiff }: Vers
                         handleRestore(v.oid);
                       }}
                     >
-                      恢复此版本
+                      {t('version.restore')}
                     </Button>
                   )}
                 </div>

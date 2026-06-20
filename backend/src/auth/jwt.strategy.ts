@@ -1,5 +1,6 @@
 import type { Request } from 'express';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
+import { AppException, ErrorCode } from '../common/exceptions/app.exception';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -43,7 +44,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       select: { id: true, systemRole: true },
     });
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new AppException(ErrorCode.USER_NOT_FOUND, HttpStatus.UNAUTHORIZED);
     }
     return { userId: user.id, systemRole: user.systemRole };
   }

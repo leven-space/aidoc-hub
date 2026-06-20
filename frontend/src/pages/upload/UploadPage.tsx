@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Upload, Form, Input, Button, message, Progress, Typography, Space, Radio } from 'antd';
 import { InboxOutlined, FolderOpenOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageContainer } from '../../components/PageContainer';
 import { repoApi } from '../../services';
 import type { Repository } from '../../types';
+import { getApiErrorMessage } from '../../utils/apiError';
 import { shouldReadUploadFileAsText } from '../../utils/uploadFile';
 
 const { Dragger } = Upload;
@@ -16,6 +18,7 @@ interface FileEntry {
 }
 
 export function UploadPage() {
+  const { t } = useTranslation();
   const { workspaceId, repoId } = useParams<{ workspaceId: string; repoId: string }>();
   const [repo, setRepo] = useState<Repository | null>(null);
   const [files, setFiles] = useState<FileEntry[]>([]);
@@ -35,7 +38,7 @@ export function UploadPage() {
   const readFileEntry = (file: File, relativePath: string): Promise<FileEntry> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onerror = () => reject(new Error(`读取文件失败: ${relativePath}`));
+      reader.onerror = () => reject(new Error(t('upload.readFileFailed', { path: relativePath })));
       if (shouldReadUploadFileAsText(relativePath)) {
         reader.onload = (e) => {
           resolve({ filePath: relativePath, content: e.target?.result as string });
@@ -54,7 +57,7 @@ export function UploadPage() {
 
   const handleFiles = (fileList: File[]) => {
     if (fileList.length === 0) {
-      message.warning('未选择任何文件');
+      message.warning(t('upload.noFilesSelected'));
       return;
     }
 
@@ -87,7 +90,7 @@ export function UploadPage() {
 
   const handleSubmit = async (values: { message: string }) => {
     if (!workspaceId || !repoId || files.length === 0) {
-      message.warning('请先上传文件');
+      message.warning(t('upload.uploadFirst'));
       return;
     }
     setUploading(true);
@@ -99,10 +102,10 @@ export function UploadPage() {
         baseVersion: repo?.latestVersion?.oid,
       });
       setProgress(100);
-      message.success('提交成功');
+      message.success(t('upload.commitSuccess'));
       navigate(`/workspaces/${workspaceId}/repos/${repoId}`);
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '提交失败');
+      message.error(getApiErrorMessage(err, 'upload.commitFailed'));
     } finally {
       setUploading(false);
       setProgress(0);
@@ -111,15 +114,15 @@ export function UploadPage() {
 
   return (
     <PageContainer
-      title="提交新版本"
+      title={t('upload.title')}
       breadcrumb={[
-        { title: '工作空间', href: '/' },
-        { title: '仓库', href: `/workspaces/${workspaceId}/repos/${repoId}` },
-        { title: '提交新版本' },
+        { title: t('workspace.breadcrumb'), href: '/' },
+        { title: repo?.name ?? t('workspace.tabsRepos'), href: `/workspaces/${workspaceId}/repos/${repoId}` },
+        { title: t('upload.breadcrumb') },
       ]}
     >
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
-        <Form.Item label="上传方式">
+        <Form.Item label={t('upload.uploadMode')}>
           <Radio.Group
             value={uploadMode}
             onChange={(e) => {
@@ -127,12 +130,12 @@ export function UploadPage() {
               setFiles([]);
             }}
           >
-            <Radio.Button value="files">选择文件</Radio.Button>
-            <Radio.Button value="folder">选择文件夹</Radio.Button>
+            <Radio.Button value="files">{t('upload.selectFile')}</Radio.Button>
+            <Radio.Button value="folder">{t('upload.selectFolder')}</Radio.Button>
           </Radio.Group>
         </Form.Item>
 
-        <Form.Item label="上传文件">
+        <Form.Item label={t('upload.uploadFiles')}>
           {uploadMode === 'files' ? (
             <Dragger
               multiple
@@ -146,10 +149,8 @@ export function UploadPage() {
               <p className="ant-upload-drag-icon">
                 <InboxOutlined />
               </p>
-              <p className="ant-upload-text">点击或拖拽文件到此区域</p>
-              <p className="ant-upload-hint">
-                支持批量上传 HTML 工程中的所有文件（HTML、CSS、JS、图片等）
-              </p>
+              <p className="ant-upload-text">{t('upload.dropHint')}</p>
+              <p className="ant-upload-hint">{t('upload.dropHintDetail')}</p>
             </Dragger>
           ) : (
             <div style={{ textAlign: 'center' }}>
@@ -160,10 +161,8 @@ export function UploadPage() {
                 style={{ height: 120, width: '100%', borderStyle: 'dashed' }}
               >
                 <div>
-                  <p style={{ fontSize: 16, margin: '8px 0' }}>点击选择文件夹</p>
-                  <p style={{ color: '#999', fontSize: 13 }}>
-                    将自动读取文件夹内所有文件，保留目录结构
-                  </p>
+                  <p style={{ fontSize: 16, margin: '8px 0' }}>{t('upload.folderHint')}</p>
+                  <p style={{ color: '#999', fontSize: 13 }}>{t('upload.folderHintDetail')}</p>
                 </div>
               </Button>
               <input
@@ -184,7 +183,7 @@ export function UploadPage() {
           <div style={{ marginBottom: 16 }}>
             <Space>
               <Typography.Text type="secondary">
-                已选择 {files.length} 个文件：
+                {t('upload.selectedCount', { count: files.length })}
               </Typography.Text>
               <Button
                 type="link"
@@ -192,7 +191,7 @@ export function UploadPage() {
                 danger
                 onClick={() => setFiles([])}
               >
-                清空全部
+                {t('upload.clearAll')}
               </Button>
             </Space>
             <ul style={{ maxHeight: 300, overflow: 'auto', marginTop: 8 }}>
@@ -205,7 +204,7 @@ export function UploadPage() {
                     danger
                     onClick={() => setFiles((prev) => prev.filter((x) => x.filePath !== f.filePath))}
                   >
-                    移除
+                    {t('common.remove')}
                   </Button>
                 </li>
               ))}
@@ -217,10 +216,10 @@ export function UploadPage() {
 
         <Form.Item
           name="message"
-          label="提交说明"
-          rules={[{ required: true, message: '请输入提交说明' }]}
+          label={t('upload.commitMessage')}
+          rules={[{ required: true, message: t('validation.commitMessageRequired') }]}
         >
-          <Input.TextArea rows={3} placeholder="描述本次更新的内容" />
+          <Input.TextArea rows={3} placeholder={t('upload.commitMessagePlaceholder')} />
         </Form.Item>
 
         <Form.Item style={{ textAlign: 'right', marginBottom: 0 }}>
@@ -228,10 +227,10 @@ export function UploadPage() {
             onClick={() => navigate(`/workspaces/${workspaceId}/repos/${repoId}`)}
             style={{ marginRight: 8 }}
           >
-            取消
+            {t('common.cancel')}
           </Button>
           <Button type="primary" htmlType="submit" loading={uploading}>
-            提交新版本
+            {t('upload.title')}
           </Button>
         </Form.Item>
       </Form>

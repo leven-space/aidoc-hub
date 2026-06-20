@@ -1,6 +1,7 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 import type { ApiResponse } from '../types';
 import { clearAuthCookie } from '../utils/authCookie';
+import i18n from '../i18n';
 
 type TimedAxiosConfig = InternalAxiosRequestConfig & { __startTime?: number };
 
@@ -16,6 +17,7 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  config.headers['Accept-Language'] = i18n.language || 'zh-CN';
   if (isDev) {
     console.debug(`[API] → ${config.method?.toUpperCase()} ${config.url}`, config.params || '');
   }
@@ -57,12 +59,22 @@ api.interceptors.response.use(
         window.location.href = '/login';
       }
     }
-    const message =
+    const rawMessage =
       error.response?.data?.message ||
       error.response?.data?.error ||
-      error.message ||
-      '请求失败';
-    return Promise.reject(new Error(Array.isArray(message) ? message.join(', ') : message));
+      error.message;
+    const code = error.response?.data?.code as string | undefined;
+    let message: string;
+    if (code && i18n.exists(`errors.${code}`)) {
+      message = i18n.t(`errors.${code}`);
+    } else if (typeof rawMessage === 'string') {
+      message = rawMessage;
+    } else if (Array.isArray(rawMessage)) {
+      message = rawMessage.join(', ');
+    } else {
+      message = i18n.t('common.requestFailed');
+    }
+    return Promise.reject(new Error(message));
   },
 );
 

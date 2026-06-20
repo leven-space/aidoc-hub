@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Card, Form, Input, Button, message, Typography, Progress } from 'antd';
 import { LockOutlined, MobileOutlined, UserOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 function getPasswordStrength(password: string): number {
   if (!password) return 0;
@@ -13,12 +15,6 @@ function getPasswordStrength(password: string): number {
   if (/\d/.test(password)) score += 15;
   if (/[^A-Za-z0-9]/.test(password)) score += 10;
   return Math.min(score, 100);
-}
-
-function strengthLabel(score: number): string {
-  if (score < 40) return '弱';
-  if (score < 70) return '中';
-  return '强';
 }
 
 function strengthColor(score: number): string {
@@ -32,16 +28,23 @@ export function RegisterPage() {
   const [password, setPassword] = useState('');
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const strength = getPasswordStrength(password);
+
+  const strengthLabel = (score: number): string => {
+    if (score < 40) return t('auth.passwordStrengthWeak');
+    if (score < 70) return t('auth.passwordStrengthMedium');
+    return t('auth.passwordStrengthStrong');
+  };
 
   const onFinish = async (values: { phone: string; password: string; name?: string }) => {
     setLoading(true);
     try {
       await register(values.phone, values.password, values.name);
-      message.success('注册成功');
+      message.success(t('auth.registerSuccess'));
       navigate('/', { replace: true });
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '注册失败');
+      message.error(getApiErrorMessage(err, 'auth.registerFailed'));
     } finally {
       setLoading(false);
     }
@@ -50,31 +53,31 @@ export function RegisterPage() {
   return (
     <Card style={{ width: 400, boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
       <Typography.Title level={4} style={{ textAlign: 'center', marginBottom: 24 }}>
-        注册
+        {t('auth.register')}
       </Typography.Title>
       <Form layout="vertical" onFinish={onFinish} size="large">
         <Form.Item name="name">
-          <Input prefix={<UserOutlined />} placeholder="昵称（可选）" />
+          <Input prefix={<UserOutlined />} placeholder={t('auth.nameOptional')} />
         </Form.Item>
         <Form.Item
           name="phone"
           rules={[
-            { required: true, message: '请输入手机号' },
-            { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号' },
+            { required: true, message: t('validation.phoneRequired') },
+            { pattern: /^1[3-9]\d{9}$/, message: t('validation.phoneInvalid') },
           ]}
         >
-          <Input prefix={<MobileOutlined />} placeholder="手机号" maxLength={11} />
+          <Input prefix={<MobileOutlined />} placeholder={t('auth.phone')} maxLength={11} />
         </Form.Item>
         <Form.Item
           name="password"
           rules={[
-            { required: true, message: '请输入密码' },
-            { min: 6, message: '密码至少 6 位' },
+            { required: true, message: t('validation.passwordRequired') },
+            { min: 6, message: t('validation.passwordMin') },
           ]}
         >
           <Input.Password
             prefix={<LockOutlined />}
-            placeholder="密码"
+            placeholder={t('auth.password')}
             onChange={(e) => setPassword(e.target.value)}
           />
         </Form.Item>
@@ -87,7 +90,7 @@ export function RegisterPage() {
               size="small"
             />
             <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-              密码强度：{strengthLabel(strength)}
+              {t('auth.passwordStrength', { level: strengthLabel(strength) })}
             </Typography.Text>
           </div>
         )}
@@ -95,26 +98,26 @@ export function RegisterPage() {
           name="confirm"
           dependencies={['password']}
           rules={[
-            { required: true, message: '请确认密码' },
+            { required: true, message: t('validation.confirmPasswordRequired') },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 if (!value || getFieldValue('password') === value) {
                   return Promise.resolve();
                 }
-                return Promise.reject(new Error('两次密码不一致'));
+                return Promise.reject(new Error(t('validation.passwordMismatch')));
               },
             }),
           ]}
         >
-          <Input.Password prefix={<LockOutlined />} placeholder="确认密码" />
+          <Input.Password prefix={<LockOutlined />} placeholder={t('auth.confirmPassword')} />
         </Form.Item>
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={loading} block>
-            注册
+            {t('auth.register')}
           </Button>
         </Form.Item>
         <Typography.Text type="secondary">
-          已有账号？ <Link to="/login">立即登录</Link>
+          {t('auth.hasAccount')} <Link to="/login">{t('auth.loginNow')}</Link>
         </Typography.Text>
       </Form>
     </Card>

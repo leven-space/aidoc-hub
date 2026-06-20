@@ -1,8 +1,5 @@
-import {
-  Injectable,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
+import { AppException, ErrorCode } from '../common/exceptions/app.exception';
 import * as git from 'isomorphic-git';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -75,8 +72,13 @@ export class GitService {
       const latestLog = await git.log({ fs, dir, depth: 1 });
       const latestOid = latestLog[0]?.oid;
       if (latestOid && latestOid !== baseVersion && !forceOverwrite) {
-        throw new ConflictException(
-          `当前最新版本为 ${latestOid.substring(0, 8)}，与您基于的版本 ${baseVersion.substring(0, 8)} 不一致。如需强制提交，请设置 forceOverwrite 为 true。`,
+        throw new AppException(
+          ErrorCode.VERSION_CONFLICT,
+          HttpStatus.CONFLICT,
+          {
+            latestOid: latestOid.substring(0, 8),
+            baseVersion: baseVersion.substring(0, 8),
+          },
         );
       }
     }
@@ -179,7 +181,9 @@ export class GitService {
     if (!version) {
       const fullPath = path.join(dir, filePath);
       if (!fs.existsSync(fullPath)) {
-        throw new NotFoundException(`File not found: ${filePath}`);
+        throw new AppException(ErrorCode.FILE_NOT_FOUND, HttpStatus.NOT_FOUND, {
+          path: filePath,
+        });
       }
       return fs.readFileSync(fullPath);
     }
@@ -193,8 +197,10 @@ export class GitService {
       });
       return Buffer.from(blob);
     } catch {
-      throw new NotFoundException(
-        `File not found: ${filePath} at version ${version.substring(0, 8)}`,
+      throw new AppException(
+        ErrorCode.FILE_NOT_FOUND_AT_VERSION,
+        HttpStatus.NOT_FOUND,
+        { path: filePath, version: version.substring(0, 8) },
       );
     }
   }
@@ -311,7 +317,7 @@ export class GitService {
 
   private ensureRepoExists(dir: string): void {
     if (!fs.existsSync(dir)) {
-      throw new NotFoundException('Repository not found');
+      throw new AppException(ErrorCode.REPO_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
   }
 }

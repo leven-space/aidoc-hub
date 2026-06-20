@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
-import { ConflictException } from '@nestjs/common';
+import { AppException } from '../common/exceptions/app.exception';
 import { SystemService } from './system.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 
@@ -56,6 +56,6 @@ describe('SystemService', () => {
         siteName: 'AI Doc Hub',
         publicApiUrl: 'http://localhost:5173',
       }),
-    ).rejects.toBeInstanceOf(ConflictException);
+    ).rejects.toBeInstanceOf(AppException);
   });
 });

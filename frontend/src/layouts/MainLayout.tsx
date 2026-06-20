@@ -14,8 +14,10 @@ import {
   ToolOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { GlobalSearch } from '../components/GlobalSearch';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { OnboardingTourHost } from '../components/OnboardingTour';
 
 const { Header, Sider, Content } = Layout;
@@ -25,6 +27,7 @@ export function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
 
   const isSystemAdmin = user?.systemRole === 'SYSTEM_ADMIN';
 
@@ -33,29 +36,29 @@ export function MainLayout() {
   };
 
   const settingsChildren: MenuProps['items'] = [
-    { key: '/settings/tokens', label: <span data-tour="nav-tokens">Token 管理</span> },
-    { key: '/settings/mcp', label: <span data-tour="nav-mcp">MCP 接入</span> },
+    { key: '/settings/tokens', label: <span data-tour="nav-tokens">{t('nav.tokens')}</span> },
+    { key: '/settings/mcp', label: <span data-tour="nav-mcp">{t('nav.mcp')}</span> },
     ...(isSystemAdmin
-      ? [{ key: '/settings/system', label: '系统配置', icon: <ToolOutlined /> }]
+      ? [{ key: '/settings/system', label: t('nav.systemConfig'), icon: <ToolOutlined /> }]
       : []),
-    { key: '/settings/audit', label: '审计日志' },
+    { key: '/settings/audit', label: t('nav.audit') },
   ];
 
   const menuItems: MenuProps['items'] = [
     {
       key: '/',
       icon: <HomeOutlined />,
-      label: <span data-tour="nav-workspaces">工作空间</span>,
+      label: <span data-tour="nav-workspaces">{t('nav.workspaces')}</span>,
     },
     {
       key: '/recycle',
       icon: <FolderOutlined />,
-      label: '回收站',
+      label: t('nav.recycle'),
     },
     {
       key: '/settings',
       icon: <SettingOutlined />,
-      label: '个人设置',
+      label: t('nav.settings'),
       children: settingsChildren,
     },
   ];
@@ -67,13 +70,13 @@ export function MainLayout() {
     ) || (location.pathname.startsWith('/workspaces') ? '/' : location.pathname);
 
   const userMenuItems: MenuProps['items'] = [
-    { key: 'tokens', icon: <SettingOutlined />, label: 'Token 管理' },
-    { key: 'mcp', icon: <ApiOutlined />, label: 'MCP 接入' },
+    { key: 'tokens', icon: <SettingOutlined />, label: t('nav.tokens') },
+    { key: 'mcp', icon: <ApiOutlined />, label: t('nav.mcp') },
     { type: 'divider' },
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: '退出登录',
+      label: t('nav.logout'),
       onClick: () => {
         logout();
         navigate('/login');
@@ -111,7 +114,7 @@ export function MainLayout() {
           onClick={() => navigate('/')}
         >
           <Typography.Title level={4} style={{ color: '#fff', margin: 0 }}>
-            {collapsed ? 'ADH' : 'AI Doc Hub'}
+            {collapsed ? t('common.appShortName') : t('common.appName')}
           </Typography.Title>
         </div>
         <Menu
@@ -160,8 +163,9 @@ export function MainLayout() {
               data-tour="help-button"
               onClick={startTour}
             >
-              新手引导
+              {t('nav.helpTour')}
             </Button>
+            <LanguageSwitcher />
             <Dropdown
               menu={{
                 items: userMenuItems,
@@ -174,7 +178,7 @@ export function MainLayout() {
             >
               <Space style={{ cursor: 'pointer' }}>
                 <Avatar icon={<UserOutlined />} size="small" />
-                <span>{user?.name || '用户'}</span>
+                <span>{user?.name || t('common.user')}</span>
               </Space>
             </Dropdown>
           </Space>
