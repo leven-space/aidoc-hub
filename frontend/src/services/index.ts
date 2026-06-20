@@ -9,7 +9,35 @@ import type {
   AccessToken,
   AuditLog,
   ShareInfo,
+  ShareView,
+  SharePasswordRequired,
+  SystemConfig,
+  SetupInitResponse,
+  McpSetupSnippets,
 } from '../types';
+
+export const setupApi = {
+  status: () => api.get<{ initialized: boolean }>('/setup/status').then((r) => r.data),
+  initialize: (data: {
+    phone: string;
+    password: string;
+    name?: string;
+    siteName: string;
+    publicApiUrl: string;
+  }) => api.post<SetupInitResponse>('/setup/initialize', data).then((r) => r.data),
+};
+
+export const systemApi = {
+  getConfig: () => api.get<SystemConfig>('/system/config').then((r) => r.data),
+  updateConfig: (data: Partial<SystemConfig>) =>
+    api.patch<SystemConfig>('/system/config', data).then((r) => r.data),
+};
+
+export const mcpApi = {
+  listTools: () =>
+    api.get<{ tools: McpSetupSnippets['tools'] }>('/mcp/tools').then((r) => r.data),
+  getSetupSnippets: () => api.get<McpSetupSnippets>('/mcp/setup-snippets').then((r) => r.data),
+};
 
 export const authApi = {
   register: (data: { phone: string; password: string; name?: string }) =>
@@ -63,11 +91,28 @@ export const repoApi = {
         params: { path, version },
       })
       .then((r) => r.data),
+  getPreviewUrl: (
+    workspaceId: string,
+    repoId: string,
+    filePath: string,
+    version?: string,
+  ) => {
+    const params = new URLSearchParams();
+    if (version) params.set('version', version);
+    const token = localStorage.getItem('accessToken');
+    if (token) params.set('token', token);
+    const query = params.toString();
+    const encodedPath = filePath
+      .split('/')
+      .map((segment) => encodeURIComponent(segment))
+      .join('/');
+    return `/api/workspaces/${workspaceId}/repos/${repoId}/preview/${encodedPath}${query ? `?${query}` : ''}`;
+  },
   commit: (
     workspaceId: string,
     repoId: string,
     data: {
-      files: { filePath: string; content: string }[];
+      files: { filePath: string; content: string; encoding?: 'utf-8' | 'base64' }[];
       message: string;
       baseVersion?: string;
       forceOverwrite?: boolean;
@@ -129,4 +174,26 @@ export const shareApi = {
   list: (workspaceId: string, repoId: string) =>
     api.get<ShareInfo[]>('/shares', { params: { workspaceId, repoId } }).then((r) => r.data),
   deactivate: (id: string) => api.delete(`/shares/${id}`).then((r) => r.data),
+  getView: (token: string, password?: string) =>
+    api
+      .get<ShareView | SharePasswordRequired>(`/shares/${token}/view`, {
+        params: password ? { password } : undefined,
+      })
+      .then((r) => r.data),
+  readFile: (token: string, path: string, password?: string) =>
+    api
+      .get<string>(`/shares/${token}/file`, {
+        params: { path, ...(password ? { password } : {}) },
+      })
+      .then((r) => r.data),
+  getPreviewUrl: (token: string, filePath: string, password?: string) => {
+    const params = new URLSearchParams();
+    if (password) params.set('password', password);
+    const query = params.toString();
+    const encodedPath = filePath
+      .split('/')
+      .map((segment) => encodeURIComponent(segment))
+      .join('/');
+    return `/api/shares/${token}/preview/${encodedPath}${query ? `?${query}` : ''}`;
+  },
 };

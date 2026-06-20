@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { WorkspaceService } from '../workspace/workspace.service';
+import { SystemService } from '../system/system.service';
 
 @Injectable()
 export class AuditService {
   constructor(
     private prisma: PrismaService,
     private workspaceService: WorkspaceService,
+    private systemService: SystemService,
   ) {}
 
   async listLogs(
@@ -26,6 +28,8 @@ export class AuditService {
 
     if (filters.workspaceId) {
       await this.workspaceService.checkAdmin(filters.workspaceId, userId);
+    } else {
+      await this.systemService.requireSystemAdmin(userId);
     }
 
     const where: any = {};

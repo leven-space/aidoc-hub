@@ -1,0 +1,33 @@
+---
+description: NestJS 后端编码规范
+globs: backend/**/*
+alwaysApply: false
+---
+
+# Backend 规范
+
+详见 `backend/AGENTS.md`。
+
+## 模块结构
+
+`{module}.module.ts` + `{module}.service.ts` + `{module}.controller.ts`（可选 dto/）
+
+## 约定
+
+- 相对路径 import，无 `@/` alias
+- Controller 薄层 + `@UseGuards(JwtAuthGuard)`，权限在 Service 校验
+- 异常用 `NotFoundException` / `ForbiddenException` / `ConflictException`
+- Git 操作仅通过 `GitService`，不直接用 isomorphic-git
+- 横切逻辑放 `common/`（guards/filters/interceptors/middlewares）
+
+## 示例
+
+```typescript
+// ❌ 业务逻辑堆在 controller
+@Post() create(@Body() body) { return this.prisma.repo.create({...}); }
+
+// ✅ 委托 service
+@Post() create(@Body() body: CreateRepoDto) {
+  return this.repoService.createRepo(workspaceId, userId, body);
+}
+```

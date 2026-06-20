@@ -1,0 +1,28 @@
+---
+description: AI Doc Hub 核心约束 — 技术栈、模块边界、防乱写
+alwaysApply: true
+---
+
+# 核心约束
+
+修改前阅读 `AGENTS.md`。Monorepo：`backend/` NestJS + `frontend/` React。
+
+## 必须遵守
+
+- 最小改动：只改任务相关文件，不顺手重构
+- 禁止在文件末尾重复粘贴整段代码（import/组件/函数只能有一份）
+- 不擅自加依赖、换技术栈、新建平行架构
+- 改完运行 `pnpm lint` 和 `pnpm build`
+
+## 模块放哪
+
+- 新 API → `backend/src/{module}/` + `frontend/src/services/index.ts`
+- 新页面 → `frontend/src/pages/{domain}/` + `App.tsx` 注册路由
+- 共享类型 → `frontend/src/types/index.ts`
+- 数据库 → `backend/prisma/schema.prisma`
+
+## 禁止
+
+- Frontend 直接 fetch/axios（走 `services/`）
+- 引入 Redux/Tailwind/Next.js
+- 提交 `dist/`、`.env`、`node_modules/`

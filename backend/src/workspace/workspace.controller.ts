@@ -18,8 +18,15 @@ export class WorkspaceController {
   constructor(private workspaceService: WorkspaceService) {}
 
   @Post()
-  create(@Request() req: any, @Body() body: { name: string; description?: string }) {
-    return this.workspaceService.create(req.user.userId, body.name, body.description);
+  create(
+    @Request() req: any,
+    @Body() body: { name: string; description?: string },
+  ) {
+    return this.workspaceService.create(
+      req.user.userId,
+      body.name,
+      body.description,
+    );
   }
 
   @Get()
@@ -43,7 +50,12 @@ export class WorkspaceController {
     @Param('id') id: string,
     @Body() body: { name?: string; description?: string },
   ) {
-    return this.workspaceService.update(id, req.user.userId, body.name, body.description);
+    return this.workspaceService.update(
+      id,
+      req.user.userId,
+      body.name,
+      body.description,
+    );
   }
 
   @Delete(':id')
@@ -73,7 +85,12 @@ export class WorkspaceController {
     @Param('id') id: string,
     @Body() body: { phone: string; role: string },
   ) {
-    return this.workspaceService.inviteMember(id, req.user.userId, body.phone, body.role);
+    return this.workspaceService.inviteMember(
+      id,
+      req.user.userId,
+      body.phone,
+      body.role,
+    );
   }
 
   @Put(':id/members/:memberId')
@@ -83,7 +100,12 @@ export class WorkspaceController {
     @Param('memberId') memberId: string,
     @Body() body: { role: string },
   ) {
-    return this.workspaceService.updateMemberRole(id, req.user.userId, memberId, body.role);
+    return this.workspaceService.updateMemberRole(
+      id,
+      req.user.userId,
+      memberId,
+      body.role,
+    );
   }
 
   @Delete(':id/members/:memberId')

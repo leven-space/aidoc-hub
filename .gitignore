@@ -35,6 +35,12 @@ backend/prisma/migrations/
 # Docker
 postgres_data/
 
+# Runtime git storage (REPOS_PATH)
+backend/repos/
+
+# Local agent / IDE runtime state
+.omc/
+
 # Misc
 *.tgz
 .cache/

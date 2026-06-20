@@ -8,13 +8,26 @@
     "build": "pnpm -r run build",
     "test": "pnpm -r run test",
     "test:e2e": "playwright test",
-    "lint": "pnpm -r run lint"
+    "lint": "pnpm -r run lint",
+    "prepare": "husky"
   },
   "engines": {
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.0"
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@playwright/test": "^1.61.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2"
+  },
+  "lint-staged": {
+    "backend/**/*.ts": [
+      "pnpm --filter backend exec eslint --fix"
+    ],
+    "frontend/**/*.{ts,tsx}": [
+      "pnpm --filter frontend exec eslint --fix"
+    ]
   }
 }

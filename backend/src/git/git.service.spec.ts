@@ -172,11 +172,7 @@ describe('GitService', () => {
     expect(content).toBe('<h1>V1</h1>');
 
     // Read latest
-    const latest = await service.readFileAtVersion(
-      'ws1',
-      'repo6',
-      'page.html',
-    );
+    const latest = await service.readFileAtVersion('ws1', 'repo6', 'page.html');
     expect(latest).toBe('<h1>V2</h1>');
   });
 
@@ -213,5 +209,36 @@ describe('GitService', () => {
       'data.html',
     );
     expect(currentContent).toBe('original');
+  });
+
+  it('should remove files added after target version on restore', async () => {
+    await service.initRepo('ws1', 'repo8');
+    await service.commitFiles(
+      'ws1',
+      'repo8',
+      [{ filePath: 'a.html', content: 'v1' }],
+      'V1',
+      'user1',
+    );
+    const v1 = await service.getLatestVersion('ws1', 'repo8');
+
+    await service.commitFiles(
+      'ws1',
+      'repo8',
+      [
+        { filePath: 'a.html', content: 'v2' },
+        { filePath: 'b.html', content: 'extra' },
+      ],
+      'V2',
+      'user1',
+    );
+
+    await service.restoreVersion('ws1', 'repo8', v1!.oid, 'user2');
+
+    const files = await service.listFiles('ws1', 'repo8');
+    expect(files).toEqual(['a.html']);
+    await expect(
+      service.readFileAtVersion('ws1', 'repo8', 'b.html'),
+    ).rejects.toThrow();
   });
 });

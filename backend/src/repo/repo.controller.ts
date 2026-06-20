@@ -25,7 +25,12 @@ export class RepoController {
     @Param('workspaceId') workspaceId: string,
     @Body() body: { name: string; description?: string },
   ) {
-    return this.repoService.createRepo(workspaceId, req.user.userId, body.name, body.description);
+    return this.repoService.createRepo(
+      workspaceId,
+      req.user.userId,
+      body.name,
+      body.description,
+    );
   }
 
   @Get()
@@ -34,10 +39,7 @@ export class RepoController {
   }
 
   @Get('recycle/list')
-  listDeleted(
-    @Request() req: any,
-    @Param('workspaceId') workspaceId: string,
-  ) {
+  listDeleted(@Request() req: any, @Param('workspaceId') workspaceId: string) {
     return this.repoService.listDeletedRepos(workspaceId, req.user.userId);
   }
 
@@ -56,7 +58,11 @@ export class RepoController {
     @Param('workspaceId') workspaceId: string,
     @Param('repoId') repoId: string,
   ) {
-    return this.repoService.softDeleteRepo(repoId, workspaceId, req.user.userId);
+    return this.repoService.softDeleteRepo(
+      repoId,
+      workspaceId,
+      req.user.userId,
+    );
   }
 
   @Post(':repoId/restore')
@@ -74,7 +80,11 @@ export class RepoController {
     @Param('workspaceId') workspaceId: string,
     @Param('repoId') repoId: string,
   ) {
-    return this.repoService.permanentDeleteRepo(repoId, workspaceId, req.user.userId);
+    return this.repoService.permanentDeleteRepo(
+      repoId,
+      workspaceId,
+      req.user.userId,
+    );
   }
 
   @Post(':repoId/commits')
@@ -82,8 +92,13 @@ export class RepoController {
     @Request() req: any,
     @Param('workspaceId') workspaceId: string,
     @Param('repoId') repoId: string,
-    @Body() body: {
-      files: { filePath: string; content: string }[];
+    @Body()
+    body: {
+      files: {
+        filePath: string;
+        content: string;
+        encoding?: 'utf-8' | 'base64';
+      }[];
       message: string;
       baseVersion?: string;
       forceOverwrite?: boolean;
@@ -117,7 +132,34 @@ export class RepoController {
     @Query('path') filePath: string,
     @Query('version') version: string,
   ) {
-    return this.repoService.readFile(repoId, workspaceId, req.user.userId, filePath, version);
+    return this.repoService.readFile(
+      repoId,
+      workspaceId,
+      req.user.userId,
+      filePath,
+      version,
+    );
+  }
+
+  @Get(':repoId/preview/*splat')
+  async servePreview(
+    @Request() req: any,
+    @Param('workspaceId') workspaceId: string,
+    @Param('repoId') repoId: string,
+    @Param('splat') splat: string | string[],
+    @Query('version') version: string,
+    @Res() res: Response,
+  ) {
+    const rawPath = Array.isArray(splat) ? splat.join('/') : splat;
+    const decodedPath = decodeURIComponent(rawPath);
+    return this.repoService.servePreviewFile(
+      repoId,
+      workspaceId,
+      req.user.userId,
+      decodedPath,
+      version,
+      res,
+    );
   }
 
   @Get(':repoId/download')

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsIn } from 'class-validator';
 
 export class CommitFileDto {
   @IsString()
@@ -6,6 +6,10 @@ export class CommitFileDto {
 
   @IsString()
   content: string;
+
+  @IsOptional()
+  @IsIn(['utf-8', 'base64'])
+  encoding?: 'utf-8' | 'base64';
 }
 
 export class CommitDto {

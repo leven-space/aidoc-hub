@@ -11,6 +11,7 @@ import { VersionModule } from './version/version.module';
 import { ShareModule } from './share/share.module';
 import { McpModule } from './mcp/mcp.module';
 import { AuditModule } from './audit/audit.module';
+import { SystemModule } from './system/system.module';
 import { AuditMiddleware } from './common/middlewares/audit.middleware';
 import { HttpLoggerMiddleware } from './common/middlewares/http-logger.middleware';
 
@@ -22,6 +23,7 @@ import { HttpLoggerMiddleware } from './common/middlewares/http-logger.middlewar
     }),
     PrismaModule,
     AuthModule,
+    SystemModule,
     WorkspaceModule,
     GitModule,
     RepoModule,

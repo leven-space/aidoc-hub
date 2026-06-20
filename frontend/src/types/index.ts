@@ -3,6 +3,25 @@ export interface User {
   phone: string;
   name: string;
   avatar: string;
+  systemRole?: 'USER' | 'SYSTEM_ADMIN';
+}
+
+export interface SystemConfig {
+  publicApiUrl: string;
+  siteName: string;
+  registrationEnabled: boolean;
+}
+
+export interface SetupInitResponse {
+  accessToken: string;
+  user: User;
+}
+
+export interface McpSetupSnippets {
+  mcpUrl: string;
+  publicApiUrl: string;
+  tools: { name: string; description: string; inputSchema: Record<string, unknown> }[];
+  setupGuide: string;
 }
 
 export interface AuthResponse {
@@ -79,6 +98,19 @@ export interface ShareInfo {
   url: string;
   expiresAt: string | null;
   createdAt: string;
+}
+
+export interface ShareView {
+  requiresPassword: false;
+  type: 'VIEW_ONLY' | 'SOURCE_ACCESS';
+  version: string | null;
+  repoName: string;
+  repoDescription: string;
+  files: string[];
+}
+
+export interface SharePasswordRequired {
+  requiresPassword: true;
 }
 
 export interface SearchResult {

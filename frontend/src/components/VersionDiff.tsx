@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { Card, Tabs, Select, Typography, Space } from 'antd';
+import { Card, Tabs, Select, Typography, Space, Button } from 'antd';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 import { PageContainer } from '../components/PageContainer';
+
+import { repoApi } from '../services';
 
 interface DiffLine {
   type: 'add' | 'remove' | 'same';
@@ -19,32 +21,70 @@ interface DiffData {
 
 interface VersionDiffProps {
   data?: DiffData;
+  workspaceId?: string;
+  repoId?: string;
   versions?: { oid: string; version: number; message: string }[];
+  files?: string[];
+  selectedFile?: string;
+  onFileChange?: (filePath: string) => void;
   onSelectVersions?: (from: string, to: string) => void;
+  onBack?: () => void;
 }
 
-export function VersionDiff({ data, versions, onSelectVersions }: VersionDiffProps) {
-  const [fromVersion, setFromVersion] = useState('');
-  const [toVersion, setToVersion] = useState('');
+export function VersionDiff({
+  data,
+  workspaceId,
+  repoId,
+  versions,
+  files,
+  selectedFile,
+  onFileChange,
+  onSelectVersions,
+  onBack,
+}: VersionDiffProps) {
+  const fromVersion = data?.fromVersion ?? '';
+  const toVersion = data?.toVersion ?? '';
 
   const handleFromChange = (val: string) => {
-    setFromVersion(val);
     if (toVersion && onSelectVersions) {
       onSelectVersions(val, toVersion);
     }
   };
 
   const handleToChange = (val: string) => {
-    setToVersion(val);
     if (fromVersion && onSelectVersions) {
       onSelectVersions(fromVersion, val);
     }
   };
 
+  const canUsePreviewUrl =
+    workspaceId &&
+    repoId &&
+    data?.filePath &&
+    /\.(html|htm)$/i.test(data.filePath);
+
+  const fromPreviewUrl =
+    canUsePreviewUrl && data
+      ? repoApi.getPreviewUrl(workspaceId, repoId, data.filePath, data.fromVersion)
+      : undefined;
+  const toPreviewUrl =
+    canUsePreviewUrl && data
+      ? repoApi.getPreviewUrl(workspaceId, repoId, data.filePath, data.toVersion)
+      : undefined;
+
   return (
-    <PageContainer title="版本对比">
+    <PageContainer
+      title="版本对比"
+      extra={
+        onBack && (
+          <Button icon={<ArrowLeftOutlined />} onClick={onBack}>
+            返回版本历史
+          </Button>
+        )
+      }
+    >
       <Card style={{ marginBottom: 16 }}>
-        <Space size={16}>
+        <Space size={16} wrap>
           <Select
             placeholder="选择基准版本"
             style={{ width: 240 }}
@@ -66,6 +106,18 @@ export function VersionDiff({ data, versions, onSelectVersions }: VersionDiffPro
               value: v.oid,
             }))}
           />
+          {files && files.length > 1 && onFileChange && (
+            <>
+              <Typography.Text type="secondary">文件</Typography.Text>
+              <Select
+                placeholder="选择对比文件"
+                style={{ width: 240 }}
+                value={selectedFile || data?.filePath}
+                onChange={onFileChange}
+                options={files.map((f) => ({ label: f, value: f }))}
+              />
+            </>
+          )}
         </Space>
       </Card>
 
@@ -134,8 +186,8 @@ export function VersionDiff({ data, versions, onSelectVersions }: VersionDiffPro
                 <div style={{ display: 'flex', gap: 16 }}>
                   <Card title={`From: ${data.fromVersion.substring(0, 8)}`} style={{ flex: 1 }}>
                     <iframe
-                      sandbox=""
-                      srcDoc={data.fromContent}
+                      src={fromPreviewUrl}
+                      srcDoc={fromPreviewUrl ? undefined : data.fromContent}
                       style={{
                         width: '100%',
                         height: 400,
@@ -146,8 +198,8 @@ export function VersionDiff({ data, versions, onSelectVersions }: VersionDiffPro
                   </Card>
                   <Card title={`To: ${data.toVersion.substring(0, 8)}`} style={{ flex: 1 }}>
                     <iframe
-                      sandbox=""
-                      srcDoc={data.toContent}
+                      src={toPreviewUrl}
+                      srcDoc={toPreviewUrl ? undefined : data.toContent}
                       style={{
                         width: '100%',
                         height: 400,

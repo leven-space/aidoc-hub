@@ -221,13 +221,15 @@ aidoc-hub/
 
 Contributions are welcome! Whether it's bug reports, feature requests, documentation improvements, or code contributions — every bit helps.
 
+**Before coding**, read [AGENTS.md](AGENTS.md) (AI harness & engineering standards) and [CONTRIBUTING.md](CONTRIBUTING.md) (commit/PR conventions).
+
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create your feature branch (`git checkout -b feat/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat(frontend): add amazing feature'`)
+4. Push to the branch (`git push origin feat/amazing-feature`)
 5. Open a Pull Request
 
-Please follow the [Conventional Commits](https://www.conventionalcommits.org/) specification for commit messages.
+Please follow the [Conventional Commits](https://www.conventionalcommits.org/) specification for commit messages. Husky + commitlint enforce this locally.
 
 [(back to top)](#ai-doc-hub)
 

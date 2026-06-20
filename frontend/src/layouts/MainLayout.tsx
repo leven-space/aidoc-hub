@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Layout, Menu, Typography, Avatar, Dropdown, Space } from 'antd';
+import { Layout, Menu, Typography, Avatar, Dropdown, Space, Button } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   HomeOutlined,
@@ -9,34 +9,16 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   LogoutOutlined,
+  QuestionCircleOutlined,
+  ApiOutlined,
+  ToolOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { GlobalSearch } from '../components/GlobalSearch';
+import { OnboardingTourHost } from '../components/OnboardingTour';
 
 const { Header, Sider, Content } = Layout;
-
-const menuItems: MenuProps['items'] = [
-  {
-    key: '/',
-    icon: <HomeOutlined />,
-    label: '工作空间',
-  },
-  {
-    key: '/recycle',
-    icon: <FolderOutlined />,
-    label: '回收站',
-  },
-  {
-    key: '/settings',
-    icon: <SettingOutlined />,
-    label: '个人设置',
-    children: [
-      { key: '/settings/tokens', label: 'Token 管理' },
-      { key: '/settings/audit', label: '审计日志' },
-    ],
-  },
-];
 
 export function MainLayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -44,12 +26,49 @@ export function MainLayout() {
   const location = useLocation();
   const { user, logout } = useAuth();
 
-  const selectedKey = ['/', '/recycle', '/settings/tokens', '/settings/audit'].find((p) =>
-    location.pathname === p || (p !== '/' && location.pathname.startsWith(p)),
-  ) || (location.pathname.startsWith('/workspaces') ? '/' : location.pathname);
+  const isSystemAdmin = user?.systemRole === 'SYSTEM_ADMIN';
+
+  const startTour = () => {
+    window.dispatchEvent(new CustomEvent('aidoc-hub:start-tour'));
+  };
+
+  const settingsChildren: MenuProps['items'] = [
+    { key: '/settings/tokens', label: <span data-tour="nav-tokens">Token 管理</span> },
+    { key: '/settings/mcp', label: <span data-tour="nav-mcp">MCP 接入</span> },
+    ...(isSystemAdmin
+      ? [{ key: '/settings/system', label: '系统配置', icon: <ToolOutlined /> }]
+      : []),
+    { key: '/settings/audit', label: '审计日志' },
+  ];
+
+  const menuItems: MenuProps['items'] = [
+    {
+      key: '/',
+      icon: <HomeOutlined />,
+      label: <span data-tour="nav-workspaces">工作空间</span>,
+    },
+    {
+      key: '/recycle',
+      icon: <FolderOutlined />,
+      label: '回收站',
+    },
+    {
+      key: '/settings',
+      icon: <SettingOutlined />,
+      label: '个人设置',
+      children: settingsChildren,
+    },
+  ];
+
+  const settingsPaths = ['/settings/tokens', '/settings/mcp', '/settings/system', '/settings/audit'];
+  const selectedKey =
+    ['/', '/recycle', ...settingsPaths].find(
+      (p) => location.pathname === p || (p !== '/' && location.pathname.startsWith(p)),
+    ) || (location.pathname.startsWith('/workspaces') ? '/' : location.pathname);
 
   const userMenuItems: MenuProps['items'] = [
     { key: 'tokens', icon: <SettingOutlined />, label: 'Token 管理' },
+    { key: 'mcp', icon: <ApiOutlined />, label: 'MCP 接入' },
     { type: 'divider' },
     {
       key: 'logout',
@@ -130,22 +149,35 @@ export function MainLayout() {
                 style={{ fontSize: 18, cursor: 'pointer' }}
               />
             )}
-            <GlobalSearch />
+            <div data-tour="global-search">
+              <GlobalSearch />
+            </div>
           </Space>
-          <Dropdown
-            menu={{
-              items: userMenuItems,
-              onClick: ({ key }) => {
-                if (key === 'tokens') navigate('/settings/tokens');
-              },
-            }}
-            placement="bottomRight"
-          >
-            <Space style={{ cursor: 'pointer' }}>
-              <Avatar icon={<UserOutlined />} size="small" />
-              <span>{user?.name || '用户'}</span>
-            </Space>
-          </Dropdown>
+          <Space size={16}>
+            <Button
+              type="text"
+              icon={<QuestionCircleOutlined />}
+              data-tour="help-button"
+              onClick={startTour}
+            >
+              新手引导
+            </Button>
+            <Dropdown
+              menu={{
+                items: userMenuItems,
+                onClick: ({ key }) => {
+                  if (key === 'tokens') navigate('/settings/tokens');
+                  if (key === 'mcp') navigate('/settings/mcp');
+                },
+              }}
+              placement="bottomRight"
+            >
+              <Space style={{ cursor: 'pointer' }}>
+                <Avatar icon={<UserOutlined />} size="small" />
+                <span>{user?.name || '用户'}</span>
+              </Space>
+            </Dropdown>
+          </Space>
         </Header>
         <Content
           style={{
@@ -156,6 +188,7 @@ export function MainLayout() {
           <Outlet />
         </Content>
       </Layout>
+      <OnboardingTourHost />
     </Layout>
   );
 }

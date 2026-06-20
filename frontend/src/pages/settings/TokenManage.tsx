@@ -14,6 +14,7 @@ import {
   Popconfirm,
 } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
 import { PageContainer } from '../../components/PageContainer';
 import { tokenApi } from '../../services';
 import type { AccessToken } from '../../types';
@@ -146,6 +147,16 @@ export function TokenManage() {
         </Button>
       }
     >
+      <Alert
+        type="info"
+        showIcon
+        style={{ marginBottom: 16 }}
+        message={
+          <span>
+            创建 Token 后，前往 <Link to="/settings/mcp">MCP 接入配置</Link> 获取 Cursor / Claude Code 配置说明
+          </span>
+        }
+      />
       <Table rowKey="id" columns={columns} dataSource={tokens} loading={loading} />
 
       <Modal

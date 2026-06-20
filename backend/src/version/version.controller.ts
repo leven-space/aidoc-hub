@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Param, Query, Body, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { VersionService } from './version.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -25,7 +34,14 @@ export class VersionController {
     @Query('from') fromVersion: string,
     @Query('to') toVersion: string,
   ) {
-    return this.versionService.getDiff(workspaceId, repoId, req.user.userId, filePath, fromVersion, toVersion);
+    return this.versionService.getDiff(
+      workspaceId,
+      repoId,
+      req.user.userId,
+      filePath,
+      fromVersion,
+      toVersion,
+    );
   }
 
   @Post('restore')
@@ -35,6 +51,11 @@ export class VersionController {
     @Param('repoId') repoId: string,
     @Body() body: { version: string },
   ) {
-    return this.versionService.restoreVersion(workspaceId, repoId, req.user.userId, body.version);
+    return this.versionService.restoreVersion(
+      workspaceId,
+      repoId,
+      req.user.userId,
+      body.version,
+    );
   }
 }

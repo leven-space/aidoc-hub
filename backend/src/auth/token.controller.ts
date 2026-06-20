@@ -18,10 +18,7 @@ export class TokenController {
   constructor(private tokenService: TokenService) {}
 
   @Post()
-  create(
-    @Request() req: any,
-    @Body() body: CreateTokenDto,
-  ) {
+  create(@Request() req: any, @Body() body: CreateTokenDto) {
     return this.tokenService.createToken(
       req.user.userId,
       body.name,

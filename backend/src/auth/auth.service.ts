@@ -1,7 +1,12 @@
-import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { SystemService } from '../system/system.service';
 
 export interface RegisterDto {
   phone: string;
@@ -21,6 +26,7 @@ export interface AuthResponse {
     phone: string;
     name: string;
     avatar: string;
+    systemRole: 'USER' | 'SYSTEM_ADMIN';
   };
 }
 
@@ -29,10 +35,20 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private systemService: SystemService,
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
-    // Validate phone format (Chinese phone number)
+    if (!(await this.systemService.isInitialized())) {
+      throw new BadRequestException(
+        'System not initialized. Please complete setup first.',
+      );
+    }
+
+    if (!(await this.systemService.isRegistrationEnabled())) {
+      throw new BadRequestException('Registration is disabled');
+    }
+
     if (!/^1[3-9]\d{9}$/.test(dto.phone)) {
       throw new BadRequestException('Invalid phone number format');
     }
@@ -57,7 +73,6 @@ export class AuthService {
       },
     });
 
-    // Auto-create personal workspace
     await this.prisma.workspace.create({
       data: {
         name: `${user.name}'s Space`,
@@ -74,7 +89,7 @@ export class AuthService {
     const token = this.generateToken(user.id);
     return {
       accessToken: token,
-      user: { id: user.id, phone: user.phone, name: user.name, avatar: user.avatar },
+      user: this.toUserResponse(user),
     };
   }
 
@@ -94,19 +109,42 @@ export class AuthService {
     const token = this.generateToken(user.id);
     return {
       accessToken: token,
-      user: { id: user.id, phone: user.phone, name: user.name, avatar: user.avatar },
+      user: this.toUserResponse(user),
     };
   }
 
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, phone: true, name: true, avatar: true, createdAt: true },
+      select: {
+        id: true,
+        phone: true,
+        name: true,
+        avatar: true,
+        systemRole: true,
+        createdAt: true,
+      },
     });
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
     return user;
+  }
+
+  private toUserResponse(user: {
+    id: string;
+    phone: string;
+    name: string;
+    avatar: string;
+    systemRole: 'USER' | 'SYSTEM_ADMIN';
+  }) {
+    return {
+      id: user.id,
+      phone: user.phone,
+      name: user.name,
+      avatar: user.avatar,
+      systemRole: user.systemRole,
+    };
   }
 
   private generateToken(userId: string): string {

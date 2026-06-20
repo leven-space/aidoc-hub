@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { GitService } from '../git/git.service';
 import { WorkspaceService } from '../workspace/workspace.service';
 import { PrismaService } from '../common/prisma/prisma.service';
@@ -11,8 +15,19 @@ export class VersionService {
     private prisma: PrismaService,
   ) {}
 
+  private async assertRepo(workspaceId: string, repoId: string) {
+    const repo = await this.prisma.repository.findFirst({
+      where: { id: repoId, workspaceId, isDeleted: false },
+    });
+    if (!repo) {
+      throw new NotFoundException('Repository not found');
+    }
+    return repo;
+  }
+
   async getHistory(workspaceId: string, repoId: string, userId: string) {
     await this.workspaceService.checkMembership(workspaceId, userId);
+    await this.assertRepo(workspaceId, repoId);
     return this.gitService.getHistory(workspaceId, repoId);
   }
 
@@ -25,6 +40,14 @@ export class VersionService {
     toVersion: string,
   ) {
     await this.workspaceService.checkMembership(workspaceId, userId);
+    await this.assertRepo(workspaceId, repoId);
+
+    if (!filePath?.trim()) {
+      throw new BadRequestException('path is required');
+    }
+    if (!fromVersion?.trim() || !toVersion?.trim()) {
+      throw new BadRequestException('from and to version are required');
+    }
 
     const fromContent = await this.gitService.readFileAtVersion(
       workspaceId,
@@ -42,7 +65,11 @@ export class VersionService {
     // Simple line-based diff
     const fromLines = fromContent.split('\n');
     const toLines = toContent.split('\n');
-    const diff: { type: 'add' | 'remove' | 'same'; line: string; lineNumber: number }[] = [];
+    const diff: {
+      type: 'add' | 'remove' | 'same';
+      line: string;
+      lineNumber: number;
+    }[] = [];
 
     const maxLen = Math.max(fromLines.length, toLines.length);
     for (let i = 0; i < maxLen; i++) {
@@ -77,9 +104,20 @@ export class VersionService {
     targetVersion: string,
   ) {
     await this.workspaceService.checkEditor(workspaceId, userId);
+    await this.assertRepo(workspaceId, repoId);
+
+    if (!targetVersion?.trim()) {
+      throw new BadRequestException('version is required');
+    }
+
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     const author = user?.name || userId;
 
-    return this.gitService.restoreVersion(workspaceId, repoId, targetVersion, author);
+    return this.gitService.restoreVersion(
+      workspaceId,
+      repoId,
+      targetVersion,
+      author,
+    );
   }
 }

@@ -1,14 +1,24 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
+import type { Response } from 'express';
+import type { Share } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { WorkspaceService } from '../workspace/workspace.service';
+import { GitService } from '../git/git.service';
+import { inferStaticContentType } from '../repo/static-content-type';
 
 @Injectable()
 export class ShareService {
   constructor(
     private prisma: PrismaService,
     private workspaceService: WorkspaceService,
+    private gitService: GitService,
   ) {}
 
   async createShare(
@@ -55,37 +65,17 @@ export class ShareService {
   }
 
   async validateShare(token: string, password?: string) {
-    const share = await this.prisma.share.findUnique({
-      where: { token },
-    });
-
-    if (!share || !share.isActive) {
-      throw new NotFoundException('Share link not found or deactivated');
-    }
-
-    if (share.expiresAt && share.expiresAt < new Date()) {
-      throw new BadRequestException('Share link has expired');
-    }
-
-    if (share.maxVisits && share.visitCount >= share.maxVisits) {
-      throw new BadRequestException('Share link has reached max visits');
-    }
+    const share = await this.findActiveShare(token);
+    this.ensureShareLimits(share);
 
     if (share.password) {
       if (!password) {
         return { requiresPassword: true };
       }
-      const valid = await bcrypt.compare(password, share.password);
-      if (!valid) {
-        throw new ForbiddenException('Invalid password');
-      }
+      await this.verifySharePassword(share, password);
     }
 
-    // Increment visit count
-    await this.prisma.share.update({
-      where: { id: share.id },
-      data: { visitCount: { increment: 1 } },
-    });
+    await this.incrementVisitCount(share.id);
 
     return {
       id: share.id,
@@ -94,6 +84,87 @@ export class ShareService {
       workspaceId: share.workspaceId,
       version: share.version,
     };
+  }
+
+  async getShareView(token: string, password?: string) {
+    const share = await this.findActiveShare(token);
+    this.ensureShareLimits(share);
+
+    if (share.password) {
+      if (!password) {
+        return { requiresPassword: true as const };
+      }
+      await this.verifySharePassword(share, password);
+    }
+
+    await this.incrementVisitCount(share.id);
+
+    const repo = await this.prisma.repository.findFirst({
+      where: {
+        id: share.repositoryId,
+        workspaceId: share.workspaceId,
+        isDeleted: false,
+      },
+    });
+    if (!repo) {
+      throw new NotFoundException('Repository not found');
+    }
+
+    const files = await this.gitService.listFiles(
+      share.workspaceId,
+      share.repositoryId,
+      share.version || undefined,
+    );
+
+    return {
+      requiresPassword: false as const,
+      type: share.type,
+      version: share.version,
+      repoName: repo.name,
+      repoDescription: repo.description,
+      files,
+    };
+  }
+
+  async readShareFile(token: string, filePath: string, password?: string) {
+    const share = await this.assertShareAccess(token, password);
+    if (share.type !== 'SOURCE_ACCESS') {
+      throw new ForbiddenException(
+        'Source access is not allowed for this share',
+      );
+    }
+    this.assertSafeFilePath(filePath);
+
+    return this.gitService.readFileAtVersion(
+      share.workspaceId,
+      share.repositoryId,
+      filePath,
+      share.version || undefined,
+    );
+  }
+
+  async serveSharePreview(
+    token: string,
+    filePath: string,
+    password: string | undefined,
+    res: Response,
+  ) {
+    const share = await this.assertShareAccess(token, password);
+    this.assertSafeFilePath(filePath);
+
+    const buffer = await this.gitService.readFileBufferAtVersion(
+      share.workspaceId,
+      share.repositoryId,
+      filePath,
+      share.version || undefined,
+    );
+
+    const contentType = inferStaticContentType(filePath);
+    if (contentType) {
+      res.setHeader('Content-Type', contentType);
+    }
+    res.setHeader('Cache-Control', 'private, max-age=60');
+    res.send(buffer);
   }
 
   async listShares(workspaceId: string, repoId: string, userId: string) {
@@ -116,5 +187,67 @@ export class ShareService {
       data: { isActive: false },
     });
     return { success: true };
+  }
+
+  private async assertShareAccess(
+    token: string,
+    password?: string,
+  ): Promise<Share> {
+    const share = await this.findActiveShare(token);
+    this.ensureShareLimits(share);
+
+    if (share.password) {
+      if (!password) {
+        throw new ForbiddenException('Password required');
+      }
+      await this.verifySharePassword(share, password);
+    }
+
+    return share;
+  }
+
+  private async findActiveShare(token: string): Promise<Share> {
+    const share = await this.prisma.share.findUnique({
+      where: { token },
+    });
+
+    if (!share || !share.isActive) {
+      throw new NotFoundException('Share link not found or deactivated');
+    }
+
+    return share;
+  }
+
+  private ensureShareLimits(share: Share) {
+    if (share.expiresAt && share.expiresAt < new Date()) {
+      throw new BadRequestException('Share link has expired');
+    }
+
+    if (share.maxVisits && share.visitCount >= share.maxVisits) {
+      throw new BadRequestException('Share link has reached max visits');
+    }
+  }
+
+  private async verifySharePassword(share: Share, password: string) {
+    if (!share.password) {
+      return;
+    }
+    const valid = await bcrypt.compare(password, share.password);
+    if (!valid) {
+      throw new ForbiddenException('Invalid password');
+    }
+  }
+
+  private async incrementVisitCount(shareId: string) {
+    await this.prisma.share.update({
+      where: { id: shareId },
+      data: { visitCount: { increment: 1 } },
+    });
+  }
+
+  private assertSafeFilePath(filePath: string) {
+    if (!filePath || filePath.includes('..') || filePath.startsWith('/')) {
+      throw new BadRequestException(`Invalid file path: ${filePath}`);
+    }
   }
 }

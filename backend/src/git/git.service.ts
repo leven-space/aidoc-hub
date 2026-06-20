@@ -1,4 +1,8 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import * as git from 'isomorphic-git';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -14,7 +18,10 @@ export interface CommitInfo {
 export interface FileContent {
   filePath: string;
   content: string;
+  encoding?: 'utf-8' | 'base64';
 }
+
+export type RepoFileInput = FileContent;
 
 @Injectable()
 export class GitService {
@@ -54,7 +61,7 @@ export class GitService {
   async commitFiles(
     workspaceId: string,
     repoName: string,
-    files: { filePath: string; content: string }[],
+    files: RepoFileInput[],
     message: string,
     author: string,
     baseVersion?: string,
@@ -81,7 +88,11 @@ export class GitService {
       if (!fs.existsSync(fileDir)) {
         fs.mkdirSync(fileDir, { recursive: true });
       }
-      fs.writeFileSync(fullPath, file.content);
+      const buffer =
+        file.encoding === 'base64'
+          ? Buffer.from(file.content, 'base64')
+          : Buffer.from(file.content, 'utf-8');
+      fs.writeFileSync(fullPath, buffer);
       await git.add({ fs, dir, filepath: file.filePath });
     }
 
@@ -147,19 +158,32 @@ export class GitService {
     filePath: string,
     version?: string,
   ): Promise<string> {
+    const buffer = await this.readFileBufferAtVersion(
+      workspaceId,
+      repoName,
+      filePath,
+      version,
+    );
+    return buffer.toString('utf-8');
+  }
+
+  async readFileBufferAtVersion(
+    workspaceId: string,
+    repoName: string,
+    filePath: string,
+    version?: string,
+  ): Promise<Buffer> {
     const dir = this.getRepoPath(workspaceId, repoName);
     this.ensureRepoExists(dir);
 
     if (!version) {
-      // Read from latest (working directory)
       const fullPath = path.join(dir, filePath);
       if (!fs.existsSync(fullPath)) {
         throw new NotFoundException(`File not found: ${filePath}`);
       }
-      return fs.readFileSync(fullPath, 'utf-8');
+      return fs.readFileSync(fullPath);
     }
 
-    // Read from specific commit
     try {
       const { blob } = await git.readBlob({
         fs,
@@ -167,7 +191,7 @@ export class GitService {
         oid: version,
         filepath: filePath,
       });
-      return Buffer.from(blob).toString('utf-8');
+      return Buffer.from(blob);
     } catch {
       throw new NotFoundException(
         `File not found: ${filePath} at version ${version.substring(0, 8)}`,
@@ -184,33 +208,43 @@ export class GitService {
     const dir = this.getRepoPath(workspaceId, repoName);
     this.ensureRepoExists(dir);
 
-    // Get all files at target version
-    const tree = await git.readTree({
-      fs,
-      dir,
-      oid: targetVersion,
-    });
+    const log = await git.log({ fs, dir, depth: 1 });
+    const headOid = log[0]?.oid;
+    const currentFiles = headOid
+      ? await this.listFilesInTree(dir, headOid)
+      : [];
+    const targetFiles = await this.listFilesInTree(dir, targetVersion);
+    const targetSet = new Set(targetFiles);
 
-    // Checkout files from target version to working directory
-    const files = await this.listFilesInTree(dir, targetVersion);
-    for (const filePath of files) {
-      try {
-        const { blob } = await git.readBlob({
-          fs,
-          dir,
-          oid: targetVersion,
-          filepath: filePath,
-        });
-        const fullPath = path.join(dir, filePath);
-        const fileDir = path.dirname(fullPath);
-        if (!fs.existsSync(fileDir)) {
-          fs.mkdirSync(fileDir, { recursive: true });
-        }
-        fs.writeFileSync(fullPath, Buffer.from(blob));
-        await git.add({ fs, dir, filepath: filePath });
-      } catch {
-        // skip files that can't be read
+    for (const filePath of currentFiles) {
+      if (targetSet.has(filePath)) {
+        continue;
       }
+      const fullPath = path.join(dir, filePath);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+      try {
+        await git.remove({ fs, dir, filepath: filePath });
+      } catch {
+        // file may not be tracked in index
+      }
+    }
+
+    for (const filePath of targetFiles) {
+      const { blob } = await git.readBlob({
+        fs,
+        dir,
+        oid: targetVersion,
+        filepath: filePath,
+      });
+      const fullPath = path.join(dir, filePath);
+      const fileDir = path.dirname(fullPath);
+      if (!fs.existsSync(fileDir)) {
+        fs.mkdirSync(fileDir, { recursive: true });
+      }
+      fs.writeFileSync(fullPath, Buffer.from(blob));
+      await git.add({ fs, dir, filepath: filePath });
     }
 
     const oid = await git.commit({

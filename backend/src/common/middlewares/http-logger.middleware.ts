@@ -18,11 +18,11 @@ export class HttpLoggerMiddleware implements NestMiddleware {
       // Color status for readability
       const statusColor =
         statusCode >= 500
-          ? '\x1b[31m'  // red
+          ? '\x1b[31m' // red
           : statusCode >= 400
-            ? '\x1b[33m'  // yellow
+            ? '\x1b[33m' // yellow
             : statusCode >= 300
-              ? '\x1b[36m'  // cyan
+              ? '\x1b[36m' // cyan
               : '\x1b[32m'; // green
       const reset = '\x1b[0m';
 

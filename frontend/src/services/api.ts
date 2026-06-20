@@ -1,5 +1,8 @@
-import axios from 'axios';
+import axios, { type InternalAxiosRequestConfig } from 'axios';
 import type { ApiResponse } from '../types';
+import { clearAuthCookie } from '../utils/authCookie';
+
+type TimedAxiosConfig = InternalAxiosRequestConfig & { __startTime?: number };
 
 const isDev = import.meta.env.DEV;
 
@@ -16,13 +19,13 @@ api.interceptors.request.use((config) => {
   if (isDev) {
     console.debug(`[API] → ${config.method?.toUpperCase()} ${config.url}`, config.params || '');
   }
-  (config as any).__startTime = Date.now();
+  (config as TimedAxiosConfig).__startTime = Date.now();
   return config;
 });
 
 api.interceptors.response.use(
   (response) => {
-    const duration = Date.now() - ((response.config as any).__startTime || 0);
+    const duration = Date.now() - ((response.config as TimedAxiosConfig).__startTime || 0);
     const wrapped = response.data as ApiResponse<unknown>;
     if (wrapped && typeof wrapped === 'object' && 'success' in wrapped) {
       response.data = wrapped.data;
@@ -35,7 +38,7 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    const duration = Date.now() - ((error.config as any)?.__startTime || 0);
+    const duration = Date.now() - ((error.config as TimedAxiosConfig | undefined)?.__startTime || 0);
     if (isDev) {
       console.error(
         `[API] ✗ ${error.response?.status || 'NETWORK'} ${error.config?.method?.toUpperCase()} ${error.config?.url} (${duration}ms)`,
@@ -45,7 +48,12 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('user');
-      if (!window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
+      clearAuthCookie();
+      if (
+        !window.location.pathname.startsWith('/login') &&
+        !window.location.pathname.startsWith('/register') &&
+        !window.location.pathname.startsWith('/share')
+      ) {
         window.location.href = '/login';
       }
     }

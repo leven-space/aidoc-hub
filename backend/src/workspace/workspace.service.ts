@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 
 @Injectable()
@@ -98,7 +103,12 @@ export class WorkspaceService {
     return { success: true };
   }
 
-  async update(workspaceId: string, userId: string, name?: string, description?: string) {
+  async update(
+    workspaceId: string,
+    userId: string,
+    name?: string,
+    description?: string,
+  ) {
     await this.checkAdmin(workspaceId, userId);
     return this.prisma.workspace.update({
       where: { id: workspaceId },
@@ -110,7 +120,12 @@ export class WorkspaceService {
   }
 
   // Member management
-  async inviteMember(workspaceId: string, userId: string, phone: string, role: string) {
+  async inviteMember(
+    workspaceId: string,
+    userId: string,
+    phone: string,
+    role: string,
+  ) {
     await this.checkAdmin(workspaceId, userId);
 
     const targetUser = await this.prisma.user.findUnique({ where: { phone } });
@@ -135,7 +150,12 @@ export class WorkspaceService {
     });
   }
 
-  async updateMemberRole(workspaceId: string, userId: string, memberId: string, role: string) {
+  async updateMemberRole(
+    workspaceId: string,
+    userId: string,
+    memberId: string,
+    role: string,
+  ) {
     await this.checkAdmin(workspaceId, userId);
     return this.prisma.workspaceMember.update({
       where: { id: memberId },
@@ -145,7 +165,9 @@ export class WorkspaceService {
 
   async removeMember(workspaceId: string, userId: string, memberId: string) {
     await this.checkAdmin(workspaceId, userId);
-    const member = await this.prisma.workspaceMember.findUnique({ where: { id: memberId } });
+    const member = await this.prisma.workspaceMember.findUnique({
+      where: { id: memberId },
+    });
     if (!member) {
       throw new NotFoundException('Member not found');
     }
@@ -160,7 +182,9 @@ export class WorkspaceService {
     await this.checkMembership(workspaceId, userId);
     return this.prisma.workspaceMember.findMany({
       where: { workspaceId },
-      include: { user: { select: { id: true, name: true, avatar: true, phone: true } } },
+      include: {
+        user: { select: { id: true, name: true, avatar: true, phone: true } },
+      },
     });
   }
 
@@ -191,4 +215,3 @@ export class WorkspaceService {
     return member;
   }
 }
-

@@ -1,0 +1,33 @@
+---
+description: React 前端编码规范
+globs: frontend/**/*
+alwaysApply: false
+---
+
+# Frontend 规范
+
+详见 `frontend/AGENTS.md`。
+
+## 结构
+
+- 页面：`pages/{domain}/XxxPage.tsx`，`export function XxxPage()`
+- 路由：仅 `App.tsx`
+- API：仅 `services/index.ts`，页面 import `{ xxxApi }`
+- 类型：`import type { X } from '../../types'`
+
+## 页面模板
+
+```typescript
+export function FooPage() {
+  const [data, setData] = useState<Foo[]>([]);
+  useEffect(() => { fooApi.list().then(setData).catch(...); }, []);
+  return <PageContainer title="...">...</PageContainer>;
+}
+```
+
+## 禁止
+
+- 文件内重复 import/组件定义
+- 页面内 axios/fetch
+- 使用 `@/` path alias（项目用相对路径）
+- 硬编码英文 UI 文案

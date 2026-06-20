@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Spin, Select, Button, Space, Empty, Typography } from 'antd';
 import { FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons';
 
 interface HtmlPreviewProps {
   content: string;
+  previewUrl?: string;
   loading?: boolean;
   filePath?: string;
   versions?: { oid: string; version: number; message: string }[];
@@ -13,6 +14,7 @@ interface HtmlPreviewProps {
 
 export function HtmlPreview({
   content,
+  previewUrl,
   loading,
   filePath,
   versions,
@@ -20,14 +22,16 @@ export function HtmlPreview({
   onVersionChange,
 }: HtmlPreviewProps) {
   const [fullscreen, setFullscreen] = useState(false);
+  const [loadedPreviewUrl, setLoadedPreviewUrl] = useState<string | null>(null);
 
   const isHtmlFile = (fp?: string) => {
-    if (!fp) return true; // default to HTML preview
+    if (!fp) return true;
     const ext = fp.split('.').pop()?.toLowerCase() || '';
     return ['html', 'htm'].includes(ext);
   };
 
   const showHtmlPreview = isHtmlFile(filePath);
+  const iframePending = Boolean(showHtmlPreview && previewUrl && loadedPreviewUrl !== previewUrl);
 
   const toolbar = (
     <div
@@ -69,19 +73,49 @@ export function HtmlPreview({
 
   const previewBody = (
     <div style={{ position: 'relative', minHeight: 400 }}>
-      {loading ? (
+      {showHtmlPreview && previewUrl ? (
+        <>
+          {iframePending && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 1,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                background: 'rgba(255, 255, 255, 0.85)',
+              }}
+            >
+              <Spin tip="加载中..." />
+            </div>
+          )}
+          <iframe
+            key={previewUrl}
+            src={previewUrl}
+            title="HTML Preview"
+            onLoad={() => setLoadedPreviewUrl(previewUrl)}
+            onError={() => setLoadedPreviewUrl(previewUrl)}
+            style={{
+              width: '100%',
+              height: fullscreen ? 'calc(100vh - 120px)' : 'min(80vh, 900px)',
+              border: 'none',
+              display: 'block',
+            }}
+          />
+        </>
+      ) : loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
           <Spin tip="加载中..." />
         </div>
       ) : content ? (
         showHtmlPreview ? (
           <iframe
-            sandbox=""
             srcDoc={content}
             title="HTML Preview"
             style={{
               width: '100%',
-              height: fullscreen ? 'calc(100vh - 120px)' : 500,
+              height: fullscreen ? 'calc(100vh - 120px)' : 'min(80vh, 900px)',
               border: 'none',
               display: 'block',
             }}

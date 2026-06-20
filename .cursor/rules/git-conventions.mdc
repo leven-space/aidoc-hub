@@ -1,0 +1,31 @@
+---
+description: Git 提交与 PR 规范
+alwaysApply: true
+---
+
+# Git 规范
+
+详见 `CONTRIBUTING.md`。
+
+## Commit 格式
+
+```
+<type>(<scope>): <subject>
+```
+
+- type: `feat` `fix` `docs` `style` `refactor` `test` `chore` `perf`
+- scope: `backend` `frontend` `mcp` `prisma` `ci` `deps`
+- subject: 中文或英文，祈使句，<= 72 字符
+
+示例：`fix(frontend): remove duplicate UploadPage component`
+
+## PR 要求
+
+- 一个 PR 一个目的，避免混合无关改动
+- 描述包含：变更摘要 + 测试方式
+- 不提交 `.env`、`dist/`、密钥
+
+## AI 注意
+
+- 除非用户明确要求，**不要自动 commit/push**
+- commit 前确认 `pnpm lint` 通过

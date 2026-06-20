@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   Layout,
   Tree,
@@ -23,6 +23,7 @@ import { HtmlPreview } from '../../components/HtmlPreview';
 import { ShareModal } from '../../components/ShareModal';
 import { repoApi, versionApi } from '../../services';
 import type { Repository, VersionInfo } from '../../types';
+import { pickDefaultPreviewFile } from '../../utils/pickPreviewFile';
 
 const { Sider, Content } = Layout;
 
@@ -39,6 +40,13 @@ export function RepoDetail() {
   const [shareOpen, setShareOpen] = useState(false);
   const navigate = useNavigate();
 
+  const isHtmlFile = (fp: string) => /\.(html|htm)$/i.test(fp);
+
+  const previewUrl =
+    workspaceId && repoId && selectedFile && isHtmlFile(selectedFile)
+      ? repoApi.getPreviewUrl(workspaceId, repoId, selectedFile, selectedVersion)
+      : undefined;
+
   const load = async () => {
     if (!workspaceId || !repoId) return;
     setLoading(true);
@@ -54,14 +62,9 @@ export function RepoDetail() {
       if (versionList.length > 0) {
         setSelectedVersion(versionList[0].oid);
       }
-      // Auto-select first HTML file for preview
-      const htmlFiles = fileList.filter((f) => f.endsWith('.html') || f.endsWith('.htm'));
-      if (htmlFiles.length > 0) {
-        // Prefer index.html at root level
-        const indexFile = htmlFiles.find((f) => f === 'index.html' || f.endsWith('/index.html'));
-        setSelectedFile(indexFile || htmlFiles[0]);
-      } else if (fileList.length > 0) {
-        setSelectedFile(fileList[0]);
+      const defaultFile = pickDefaultPreviewFile(fileList);
+      if (defaultFile) {
+        setSelectedFile(defaultFile);
       }
     } catch (err) {
       message.error(err instanceof Error ? err.message : '加载失败');
@@ -77,6 +80,10 @@ export function RepoDetail() {
   useEffect(() => {
     const loadPreview = async () => {
       if (!workspaceId || !repoId || !selectedFile) {
+        setPreviewContent('');
+        return;
+      }
+      if (isHtmlFile(selectedFile)) {
         setPreviewContent('');
         return;
       }
@@ -131,8 +138,16 @@ export function RepoDetail() {
   }
 
   // Build tree data from flat file paths
-  const buildTreeData = (filePaths: string[]): any[] => {
-    const root: Record<string, any> = {};
+  type TreeNode = {
+    key: string;
+    title: string;
+    icon: ReactNode;
+    isLeaf?: boolean;
+    children?: TreeNode[];
+  };
+
+  const buildTreeData = (filePaths: string[]): TreeNode[] => {
+    const root: Record<string, Record<string, unknown> | null> = {};
     for (const fp of filePaths) {
       const parts = fp.split('/');
       let current = root;
@@ -142,12 +157,12 @@ export function RepoDetail() {
           current[part] = i === parts.length - 1 ? null : {};
         }
         if (current[part] !== null) {
-          current = current[part];
+          current = current[part] as Record<string, Record<string, unknown> | null>;
         }
       }
     }
 
-    const buildNode = (obj: Record<string, any>, prefix: string): any[] => {
+    const buildNode = (obj: Record<string, unknown>, prefix: string): TreeNode[] => {
       return Object.keys(obj)
         .sort((a, b) => {
           // Folders first, then files
@@ -239,6 +254,7 @@ export function RepoDetail() {
         <Content style={{ padding: 16 }}>
           <HtmlPreview
             content={previewContent}
+            previewUrl={previewUrl}
             loading={previewLoading}
             filePath={selectedFile || undefined}
             versions={versions}

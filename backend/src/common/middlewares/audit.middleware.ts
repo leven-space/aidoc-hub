@@ -2,9 +2,7 @@ import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
 
-const AUDIT_ACTIONS = [
-  'POST', 'PUT', 'PATCH', 'DELETE',
-];
+const AUDIT_ACTIONS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
 const AUDIT_PATHS = [
   '/api/workspaces',
@@ -27,7 +25,7 @@ export class AuditMiddleware implements NestMiddleware {
     if (!shouldAudit) return;
 
     const userId = (req as any).user?.userId || null;
-    const ip = req.ip || req.headers['x-forwarded-for'] as string || '';
+    const ip = req.ip || (req.headers['x-forwarded-for'] as string) || '';
 
     try {
       await this.prisma.auditLog.create({
@@ -42,7 +40,9 @@ export class AuditMiddleware implements NestMiddleware {
       });
     } catch (err) {
       // Don't fail the request if audit logging fails
-      this.logger.warn(`Audit log failed for ${req.method} ${req.path}: ${err}`);
+      this.logger.warn(
+        `Audit log failed for ${req.method} ${req.path}: ${err}`,
+      );
     }
   }
 
