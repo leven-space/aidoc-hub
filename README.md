@@ -1,184 +1,225 @@
+<div align="center">
+
 # AI Doc Hub
 
-Enterprise-grade open source platform for HTML asset version management and team collaboration
+**Enterprise open-source platform for HTML asset version management, team collaboration, and AI-native workflows.**
 
-[Quickstart](#get-started) · [Features](#overview) · [Architecture](#architecture) · [中文说明](#中文说明)
+[English](README.md) · [简体中文](README_zh-CN.md)
+
+Maintained by [**leven-space**](https://github.com/leven-space)
+
+[Quick Start](#quick-start) · [Features](#features) · [Screenshots](#screenshots) · [MCP Integration](#mcp-integration) · [Architecture](#architecture) · [Contributing](CONTRIBUTING.md)
+
+<br/>
+
+[![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![pnpm](https://img.shields.io/badge/pnpm-8+-F69220?logo=pnpm&logoColor=white)](https://pnpm.io/)
+[![NestJS](https://img.shields.io/badge/Backend-NestJS-E0234E?logo=nestjs&logoColor=white)](https://nestjs.com/)
+[![React](https://img.shields.io/badge/Frontend-React-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![Playwright](https://img.shields.io/badge/E2E-Playwright-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev/)
+
+<br/>
+
+[![GitHub stars](https://img.shields.io/github/stars/leven-space/aidoc-hub?style=social)](https://github.com/leven-space/aidoc-hub/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/leven-space/aidoc-hub?style=social)](https://github.com/leven-space/aidoc-hub/network/members)
+[![GitHub issues](https://img.shields.io/github/issues/leven-space/aidoc-hub)](https://github.com/leven-space/aidoc-hub/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/leven-space/aidoc-hub)](https://github.com/leven-space/aidoc-hub/pulls)
+[![GitHub contributors](https://img.shields.io/github/contributors/leven-space/aidoc-hub)](https://github.com/leven-space/aidoc-hub/graphs/contributors)
+[![Last commit](https://img.shields.io/github/last-commit/leven-space/aidoc-hub)](https://github.com/leven-space/aidoc-hub/commits/main)
+
+<br/>
+
+<img src="docs/images/workspaces.png" alt="AI Doc Hub — Workspace dashboard" width="720" />
+
+<sub>Workspace-centric organization for HTML document repositories</sub>
+
+</div>
 
 ---
 
-## Table of Contents
+## About
 
-- [About AI Doc Hub](#about-ai-doc-hub)
-- [Get Started](#get-started)
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Contributing](#contributing)
-- [License](#license)
-- [中文说明](#中文说明)
+AI Doc Hub helps teams **manage, version, preview, and share HTML assets** without treating everyone like a developer. Built around **workspaces** and **Git-backed linear versioning**, it also exposes a **standard MCP (Model Context Protocol)** interface so tools like **Cursor**, **Claude Code**, and **Windsurf** can read and write documentation programmatically.
 
----
+> **Status:** Active development — APIs and UI may change between releases.
 
-## About AI Doc Hub
-
-AI Doc Hub is an open source enterprise platform designed to manage HTML documents and assets for teams where not everyone is a developer. It provides a workspace-centric model with built-in version control, shareable previews, and seamless integration with AI-powered tools via the MCP (Model Context Protocol).
-
-> **Note:** AI Doc Hub is under active development. APIs and interfaces may change between releases.
-
-[(back to top)](#ai-doc-hub)
+| For | AI Doc Hub provides |
+|-----|---------------------|
+| **Product / ops teams** | Upload HTML packs, preview in browser, share read-only links |
+| **Editors** | Version history, diff, restore, folder upload |
+| **Developers / AI agents** | REST API + PAT + MCP `read_file` / `write_file` |
+| **Admins** | Roles, audit logs, recycle bin, system configuration |
 
 ---
 
-## Get Started
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><b>Workspaces</b></td>
+    <td align="center"><b>HTML Preview</b></td>
+    <td align="center"><b>Version History</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/workspaces.png" alt="Workspace list" width="400" /></td>
+    <td><img src="docs/images/repo-preview.png" alt="Repository HTML preview" width="400" /></td>
+    <td><img src="docs/images/version-history.png" alt="Version history timeline" width="400" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Commit New Version</b></td>
+    <td align="center"><b>MCP Integration</b></td>
+    <td align="center"><b>Access Tokens</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/upload.png" alt="Upload and commit page" width="400" /></td>
+    <td><img src="docs/images/mcp-settings.png" alt="MCP configuration page" width="400" /></td>
+    <td><img src="docs/images/token-settings.png" alt="Personal access token management" width="400" /></td>
+  </tr>
+</table>
+
+---
+
+## Features
+
+### Core
+
+- **Workspace-centric model** — Top-level containers with **Admin / Editor / Viewer** roles and member management
+- **Git-based versioning** — Single-trunk linear history via `isomorphic-git`; every change is a commit with message and OID
+- **HTML preview** — In-app rendered preview with sanitization ([DOMPurify](https://github.com/cure53/DOMPurify))
+- **Version operations** — History timeline, side-by-side diff, restore to any revision (new commit, history preserved)
+- **Batch upload** — Files or whole folders; supports HTML, CSS, JS, and images
+
+### Collaboration & sharing
+
+- **Dual-mode share links** — **View only** (preview) or **source access** (read source + collaborate)
+- **Share controls** — Optional password, expiration, visit limits, download permission
+- **Global search** — Find workspaces and repositories quickly
+- **Recycle bin** — Soft-delete workspaces/repos with restore within retention window
+
+### AI & automation
+
+- **Personal Access Tokens (PAT)** — `adh_` tokens with `READ` or `READ_WRITE` scope
+- **MCP server** — HTTP Streamable MCP at `/api/mcp` with tools:
+  - `list_workspaces` · `list_repositories` · `read_file` · `write_file` · `get_version_history`
+- **Setup snippets** — Copy-paste MCP config for Cursor / Claude Code / Codex
+
+### Enterprise-oriented
+
+- **Audit logs** — Track sensitive operations (system admin)
+- **JWT + PAT auth** — Cookie and Bearer token support
+- **i18n** — Chinese and English UI
+- **E2E tests** — Playwright coverage for UI flows, MCP API, and version restore ([`docs/test-cases.md`](docs/test-cases.md))
+
+---
+
+## Quick Start
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) >= 18
-- [pnpm](https://pnpm.io/) >= 8
-- [Docker](https://www.docker.com/) & Docker Compose (for database)
-- PostgreSQL 18 (or use the included Docker Compose setup)
+- [Node.js](https://nodejs.org/) **>= 18**
+- [pnpm](https://pnpm.io/) **>= 8**
+- [Docker](https://www.docker.com/) (for PostgreSQL via Compose)
 
-### Local Development
+### Local development
 
-1. **Clone the repository**
+```bash
+git clone https://github.com/leven-space/aidoc-hub.git
+cd aidoc-hub
+pnpm install
 
-   ```bash
-   git clone https://github.com/your-org/aidoc-hub.git
-   cd aidoc-hub
-   ```
+docker compose up -d postgres
+cp backend/.env.example backend/.env   # optional; defaults work for local Postgres
 
-2. **Install dependencies**
+cd backend && npx prisma db push && cd ..
+pnpm dev
+```
 
-   ```bash
-   pnpm install
-   ```
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:3000/api |
 
-3. **Start PostgreSQL via Docker Compose**
+First visit opens **system setup** (admin account + site config), then register users and create workspaces.
 
-   ```bash
-   docker compose up -d postgres
-   ```
-
-4. **Configure environment**
-
-   ```bash
-   cp backend/.env.example backend/.env  # or edit backend/.env directly
-   ```
-
-   Default database URL: `postgresql://postgres:postgres@localhost:5432/aidochub?schema=public`
-
-5. **Push database schema**
-
-   ```bash
-   cd backend && npx prisma db push
-   ```
-
-6. **Start development servers**
-
-   ```bash
-   pnpm dev
-   ```
-
-   - Backend: [http://localhost:3000](http://localhost:3000)
-   - Frontend: [http://localhost:5173](http://localhost:5173)
-
-### Docker Compose (Full Stack)
-
-To run the entire stack with Docker:
+### Docker Compose (full stack)
 
 ```bash
 docker compose up -d
 ```
 
-This starts PostgreSQL, backend, and frontend in containers.
+### Run E2E tests
 
-[(back to top)](#ai-doc-hub)
+```bash
+pnpm test:e2e
+```
+
+See [`docs/test-results.md`](docs/test-results.md) for the latest automated test report.
 
 ---
 
-## Overview
+## MCP Integration
 
-- **Workspace-Centric Organization** — Workspaces serve as the top-level container for assets, with role-based member management (Admin / Editor / Viewer).
-- **Git-Based Version Control** — Every HTML document change is tracked with a single-trunk linear version model. Browse history, compare diffs, and restore any revision.
-- **AI-Native Integration** — Personal Access Tokens and the standard MCP (Model Context Protocol) interface allow AI clients like Cursor, Windsurf, and Open Code to pull and push content programmatically.
-- **Dual-Mode Sharing** — Generate shareable links in "View Only" (rendered HTML preview) or "Source Access" (with full source code) mode, with optional password protection, expiration, and visit limits.
-- **Enterprise Readiness** — Audit logs, content security (DOMPurify sanitization), conflict handling, soft-delete recycle bin, and global search are built in.
-- **Modern UI** — Clean, intuitive interface built with Ant Design, lowering the barrier for non-technical team members.
+Connect your AI client to manage documentation in your workspace:
 
-[(back to top)](#ai-doc-hub)
+```json
+{
+  "mcpServers": {
+    "aidoc-hub": {
+      "url": "https://your-host/api/mcp",
+      "headers": {
+        "Authorization": "Bearer adh_YOUR_TOKEN"
+      }
+    }
+  }
+}
+```
+
+Typical agent workflow:
+
+1. `list_workspaces` → get `workspaceId`
+2. `list_repositories` → get `repoId`
+3. `read_file` / `write_file` / `get_version_history`
+
+Create tokens under **Settings → Token Management**. `write_file` requires **READ_WRITE** PAT and **Editor** role (or higher).
 
 ---
 
 ## Architecture
 
-AI Doc Hub follows a monorepo architecture with a clear separation between the backend API and the frontend SPA.
-
 ```
 ┌─────────────────────────────────────────────────────┐
-│                    Frontend (SPA)                    │
-│         Vite · React · Ant Design · Monaco           │
+│              Frontend SPA (Vite · React · Ant Design) │
 ├─────────────────────────────────────────────────────┤
-│                   Backend (REST API)                 │
-│        NestJS · Prisma · JWT · MCP Server            │
+│         Backend API (NestJS · Prisma · JWT · MCP)     │
 ├─────────────────────────────────────────────────────┤
-│                   Data Layer                         │
-│         PostgreSQL 18 · isomorphic-git               │
+│    PostgreSQL 18  ·  isomorphic-git (per-repo storage) │
 └─────────────────────────────────────────────────────┘
 ```
 
-### Key Modules
+| Module | Responsibility |
+|--------|----------------|
+| `auth` | Register/login, JWT, PAT |
+| `workspace` | Workspaces, members, roles |
+| `repo` | Repositories, commits, files, preview, download |
+| `git` | Version control engine |
+| `version` | History, diff, restore |
+| `share` | Share links and public access |
+| `mcp` | Model Context Protocol server |
+| `audit` | Audit log queries |
+| `system` | Setup and public configuration |
 
-| Module | Description |
-|--------|-------------|
-| **Auth** | Phone-based registration/login with JWT, access token management |
-| **Workspace** | Workspace CRUD, member invitation, role management |
-| **Repository** | Document repositories within workspaces |
-| **Git** | Version control powered by isomorphic-git (commit, history, diff) |
-| **Share** | Dual-mode sharing with token-based access, expiration, and visit tracking |
-| **Version** | Version history browsing and diff comparison |
-| **MCP** | Model Context Protocol server for AI client integration |
-| **Audit** | Comprehensive operation audit logging |
-| **Recycle Bin** | Soft-delete with restore capability |
-
-[(back to top)](#ai-doc-hub)
+Monorepo layout: `backend/` (NestJS) + `frontend/` (React SPA). Details in [AGENTS.md](AGENTS.md).
 
 ---
 
 ## Tech Stack
 
-### Backend
-
-| Technology | Purpose |
-|-----------|---------|
-| [NestJS](https://nestjs.com/) | Server framework |
-| [Prisma](https://www.prisma.io/) | ORM & database migrations |
-| [PostgreSQL 18](https://www.postgresql.org/) | Primary database |
-| [isomorphic-git](https://isomorphic-git.org/) | Git-based version control |
-| [MCP SDK](https://modelcontextprotocol.io/) | AI client protocol integration |
-| [Passport.js](http://www.passportjs.org/) | JWT authentication |
-| [DOMPurify](https://github.com/cure53/DOMPurify) | HTML content sanitization |
-
-### Frontend
-
-| Technology | Purpose |
-|-----------|---------|
-| [React](https://react.dev/) | UI framework |
-| [Vite](https://vite.dev/) | Build tool & dev server |
-| [Ant Design](https://ant.design/) | UI component library |
-| [Monaco Editor](https://microsoft.github.io/monaco-editor/) | Code editor |
-| [React Router](https://reactrouter.com/) | Client-side routing |
-| [Axios](https://axios-http.com/) | HTTP client |
-
-### Infrastructure
-
-| Technology | Purpose |
-|-----------|---------|
-| [pnpm Workspaces](https://pnpm.io/workspaces) | Monorepo package management |
-| [Docker Compose](https://docs.docker.com/compose/) | Local development orchestration |
-| [Playwright](https://playwright.dev/) | End-to-end testing |
-
-[(back to top)](#ai-doc-hub)
+| Layer | Technologies |
+|-------|----------------|
+| Backend | NestJS, Prisma, PostgreSQL 18, isomorphic-git, MCP SDK, Passport JWT, DOMPurify |
+| Frontend | React 19, Vite, Ant Design 6, Monaco Editor, React Router, Axios |
+| Tooling | pnpm workspaces, Docker Compose, Playwright, Husky, commitlint |
 
 ---
 
@@ -186,123 +227,54 @@ AI Doc Hub follows a monorepo architecture with a clear separation between the b
 
 ```
 aidoc-hub/
-├── backend/                # NestJS backend API
-│   ├── prisma/             # Database schema & migrations
-│   ├── src/
-│   │   ├── auth/           # Authentication & JWT
-│   │   ├── workspace/      # Workspace management
-│   │   ├── repo/           # Repository management
-│   │   ├── git/            # Git version control service
-│   │   ├── share/          # Sharing & link generation
-│   │   ├── version/        # Version history & diff
-│   │   ├── mcp/            # MCP server for AI integration
-│   │   ├── audit/          # Audit logging
-│   │   └── common/         # Shared utilities, guards, filters
-│   └── package.json
-├── frontend/               # React frontend SPA
-│   ├── src/
-│   │   ├── components/     # Shared components
-│   │   ├── pages/          # Page components
-│   │   ├── layouts/        # Layout components
-│   │   ├── contexts/       # React contexts
-│   │   ├── services/       # API service layer
-│   │   └── theme/          # Ant Design theme config
-│   └── package.json
-├── docker-compose.yml      # Docker orchestration
-├── pnpm-workspace.yaml     # Monorepo config
-└── package.json            # Root package.json
+├── backend/           # NestJS API + Prisma
+├── frontend/          # React SPA + Playwright E2E
+├── docs/              # Test docs, README screenshots
+├── scripts/           # Utility scripts (e.g. screenshot capture)
+├── docker-compose.yml
+└── playwright.config.ts
 ```
-
-[(back to top)](#ai-doc-hub)
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Whether it's bug reports, feature requests, documentation improvements, or code contributions — every bit helps.
+We welcome issues, docs improvements, and pull requests.
 
-**Before coding**, read [AGENTS.md](AGENTS.md) (AI harness & engineering standards) and [CONTRIBUTING.md](CONTRIBUTING.md) (commit/PR conventions).
+1. Read [AGENTS.md](AGENTS.md) and [CONTRIBUTING.md](CONTRIBUTING.md)
+2. Fork → branch (`feat/…` / `fix/…`) → commit (Conventional Commits) → PR
+3. Run `pnpm lint` and `pnpm build` before submitting
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feat/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat(frontend): add amazing feature'`)
-4. Push to the branch (`git push origin feat/amazing-feature`)
-5. Open a Pull Request
+---
 
-Please follow the [Conventional Commits](https://www.conventionalcommits.org/) specification for commit messages. Husky + commitlint enforce this locally.
+## Star History
 
-[(back to top)](#ai-doc-hub)
+[![Star History Chart](https://api.star-history.com/svg?repos=leven-space/aidoc-hub&type=Date)](https://star-history.com/#leven-space/aidoc-hub&Date)
+
+---
+
+## Contributors
+
+Thanks to everyone who contributes to AI Doc Hub.
+
+<a href="https://github.com/leven-space/aidoc-hub/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=leven-space/aidoc-hub" alt="Contributors" />
+</a>
+
+Made with [contrib.rocks](https://contrib.rocks).
 
 ---
 
 ## License
 
-AI Doc Hub is released under the [MIT License](LICENSE). See the LICENSE file for the full text.
-
-Copyright (c) 2026 AI Doc Hub Contributors
-
-[(back to top)](#ai-doc-hub)
+[MIT License](LICENSE) — Copyright (c) 2026 AI Doc Hub Contributors
 
 ---
 
-## 中文说明
+<div align="center">
 
-AI Doc Hub 是一个面向企业非技术人员的开源 AI HTML 文档版本管理与协作平台。
+**[⬆ back to top](#ai-doc-hub)**
 
-### 项目背景
+If this project helps you, consider giving it a **⭐** on GitHub.
 
-解决企业内 HTML 资产分散、团队协同效率低、非技术人员操作门槛高、AI 工具链打通困难的痛点。
-
-### 核心功能
-
-- **工作空间管理** — 以团队工作空间为顶层资产组织单元，支持空间创建、成员邀请，提供管理员 / 编辑者 / 查看者三种角色
-- **Git 版本控制** — 采用单主干线性版本模型，每次修改自动提交，支持版本历史浏览、差异对比、版本回退
-- **AI 工具集成** — 提供个人 Access Token 和标准 MCP 协议接口，支持 Cursor、Windsurf、Open Code 等 AI 客户端拉取和上传内容
-- **双模式分享** — 支持「只读预览」（渲染后 HTML 预览）和「源码协作」（含完整源代码）两种分享模式，可选密码保护、有效期和访问次数限制
-- **企业级能力** — 操作审计日志、内容安全过滤（DOMPurify）、冲突处理、软删除回收站、全局搜索
-- **现代 UI** — 基于 Ant Design 构建的简洁企业级界面，降低非技术人员使用门槛
-
-### 技术栈
-
-- **后端**：NestJS + Prisma + PostgreSQL 18 + isomorphic-git + MCP SDK
-- **前端**：React + Vite + Ant Design + Monaco Editor + React Router
-- **基础设施**：pnpm Monorepo + Docker Compose + Playwright
-
-### 快速开始
-
-1. 克隆仓库并安装依赖：
-
-   ```bash
-   git clone https://github.com/your-org/aidoc-hub.git
-   cd aidoc-hub
-   pnpm install
-   ```
-
-2. 启动数据库：
-
-   ```bash
-   docker compose up -d postgres
-   ```
-
-3. 初始化数据库结构：
-
-   ```bash
-   cd backend && npx prisma db push
-   ```
-
-4. 启动开发服务：
-
-   ```bash
-   pnpm dev
-   ```
-
-   - 后端：[http://localhost:3000](http://localhost:3000)
-   - 前端：[http://localhost:5173](http://localhost:5173)
-
-### 开源协议
-
-本项目基于 [MIT License](LICENSE) 开源。
-
-Copyright (c) 2026 AI Doc Hub Contributors
-
-[(back to top)](#ai-doc-hub)
+</div>
