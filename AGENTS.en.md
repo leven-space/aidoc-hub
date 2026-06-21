@@ -45,7 +45,7 @@ aidoc-hub/
 | New page | — | `pages/{domain}/XxxPage.tsx` + `App.tsx` route |
 | Shared UI | — | `components/` |
 | DB change | `backend/prisma/schema.prisma` | sync `frontend/src/types/` |
-| AI/MCP | `backend/src/mcp/` | usually no frontend |
+| AI/MCP | `backend/src/mcp/` (**create workspace/repo + discover + in-repo file R/W**; see MCP boundary in root AGENTS) | MCP settings page |
 | Feature docs / release notes | — | `frontend/src/content/` + bilingual i18n + root `CHANGELOG.md` |
 
 ## AI Coding Rules
@@ -118,6 +118,43 @@ In-app feature descriptions, changelog, and interactive guides are first-class p
 ### v1.0.0 feature catalog (`features.ts`)
 
 Workspaces, HTML preview, **Review Mode** (with review tour), version history, upload/commit, share, global search, recycle bin, MCP, PAT, audit logs.
+
+## MCP capability boundary (required reading for AI)
+
+The MCP layer lets AI agents **create workspaces and repositories, discover resources, and read/write files inside repositories**. Implementation: `backend/src/mcp/`.
+
+### Provided tools (7 — do not add/remove without product approval)
+
+| Tool | Capability | Permission notes |
+|------|------------|------------------|
+| `list_workspaces` | List workspaces the user can access (id, name, metadata) | workspace member |
+| `create_workspace` | Create a new workspace (caller becomes ADMIN) | PAT **READ_WRITE** |
+| `list_repositories` | List repositories in a workspace | workspace member |
+| `create_repository` | Create a repository in a workspace | **ADMIN** and PAT **READ_WRITE** |
+| `read_file` | Read a file in a repo; optional `version` OID | workspace member |
+| `write_file` | Write a single file and create a new commit | **EDITOR+** and PAT **READ_WRITE** |
+| `get_version_history` | Linear Git commit history for a repo | workspace member |
+
+Typical flow: `create_workspace` → `create_repository` → `write_file` / `read_file` (or use `list_*` to discover existing resources).
+
+### Deliberately not provided (do not implement as MCP tools)
+
+| Not provided | Notes |
+|--------------|-------|
+| Member / role management | REST + Web UI only |
+| Share links, recycle bin, audit | REST + Web UI only |
+| Version restore | REST/UI only; not exposed via MCP |
+| Batch / folder upload | MCP single-file `write_file` only |
+| Delete workspace or repository | Not exposed via MCP |
+
+> New MCP tools require explicit product approval. Sync: `mcp.server.ts`, `mcp-http.service.ts`, E2E `mcp-api.spec.ts`, README/AGENTS **bilingual docs**.
+
+### Code touchpoints
+
+- Tool defs & execution: `backend/src/mcp/mcp.server.ts`
+- HTTP Streamable registration: `backend/src/mcp/mcp-http.service.ts`
+- Auth: `McpAuthGuard` + `tokenScope` (`create_workspace` / `create_repository` / `write_file` require READ_WRITE)
+- Setup guide text: `McpServer.buildSetupGuide()` (copied from MCP settings page)
 
 ## Layered docs
 

@@ -72,6 +72,29 @@ export class RepoController {
 - 迁移/同步：`npx prisma db push`（开发）或 `prisma migrate`
 - 改 schema 后同步检查 frontend `types/index.ts`
 
+## MCP 模块（`src/mcp/`）
+
+> 产品边界详见根目录 [`AGENTS.md`](../AGENTS.md)「MCP 能力边界」；英文 [`AGENTS.en.md`](../AGENTS.en.md) § MCP capability boundary。
+
+### 设计原则
+
+- **工作空间**：`list_workspaces` 发现已有空间；`create_workspace` 创建新空间（PAT 需 READ_WRITE）
+- **仓库**：`list_repositories` 发现已有仓库；`create_repository` 创建新仓库（需 **ADMIN**，PAT 需 READ_WRITE）
+- **仓库内文件操作**：`read_file`、`write_file`（单文件）、`get_version_history`
+
+### 修改 MCP 时的必改文件
+
+1. `mcp.server.ts` — `getTools()` 与 `executeTool()` switch
+2. `mcp-http.service.ts` — `createSdkServer()` 内 `registerTool`（与上表一致）
+3. `frontend/e2e/mcp-api.spec.ts` — 工具列表与权限用例
+4. 根目录 `AGENTS.md` / `AGENTS.en.md`、README / README_zh-CN.md
+
+### 权限
+
+- 所有工具：JWT 或 `adh_` PAT，经 `McpAuthGuard`
+- `write_file`：`options.tokenScope !== 'READ'` + `WorkspaceService.checkEditor`
+- 其余工具：`checkMembership` 或 `findAll`（list 场景）
+
 ## 禁止事项
 
 - 在 controller 写业务逻辑超过 5 行
@@ -79,6 +102,7 @@ export class RepoController {
 - 在 `git/` 外直接使用 isomorphic-git
 - 返回未包装的原始 Prisma 敏感字段（密码 hash 等）
 - 添加全局 middleware 而不在 `app.module.ts` 注册
+- **擅自新增 MCP 工具**（未评审的管理类接口）
 
 ## 验证
 

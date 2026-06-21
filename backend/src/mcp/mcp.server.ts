@@ -30,6 +30,18 @@ export class McpServer {
         inputSchema: { type: 'object', properties: {} },
       },
       {
+        name: 'create_workspace',
+        description: '创建新工作空间（创建者为 ADMIN；PAT 需 READ_WRITE 范围）',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: '工作空间名称' },
+            description: { type: 'string', description: '可选，工作空间描述' },
+          },
+          required: ['name'],
+        },
+      },
+      {
         name: 'list_repositories',
         description: '列出指定工作空间下的所有仓库',
         inputSchema: {
@@ -38,6 +50,20 @@ export class McpServer {
             workspaceId: { type: 'string', description: '工作空间 ID' },
           },
           required: ['workspaceId'],
+        },
+      },
+      {
+        name: 'create_repository',
+        description:
+          '在指定工作空间下创建新仓库（需要工作空间 ADMIN 权限，PAT 需 READ_WRITE 范围）',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            workspaceId: { type: 'string', description: '工作空间 ID' },
+            name: { type: 'string', description: '仓库名称' },
+            description: { type: 'string', description: '可选，仓库描述' },
+          },
+          required: ['workspaceId', 'name'],
         },
       },
       {
@@ -195,6 +221,8 @@ AI Doc Hub 使用 **HTTP Streamable MCP**（Model Context Protocol），兼容�
 ### 鉴权说明
 
 - 支持 JWT（Bearer）或 Personal Access Token（\`adh_\` 前缀）
+- \`create_workspace\` 工具要求 PAT 范围为 READ_WRITE
+- \`create_repository\` 工具要求 PAT 范围为 READ_WRITE，且用户在工作空间中为 ADMIN
 - \`write_file\` 工具要求 PAT 范围为 READ_WRITE，且用户在工作空间中为 EDITOR 或 ADMIN
 
 ---
@@ -207,9 +235,22 @@ ${toolDocs}
 
 ## 六、典型调用流程
 
-1. \`list_workspaces\` → 获取 workspaceId
-2. \`list_repositories\` → 传入 workspaceId，获取 repoId
-3. \`read_file\` / \`write_file\` / \`get_version_history\` → 传入 workspaceId + repoId 操作文件
+1. （可选）\`create_workspace\` → 创建新工作空间，获取 workspaceId
+2. \`list_workspaces\` → 获取 workspaceId
+3. （可选）\`create_repository\` → 在工作空间下创建仓库，获取 repoId
+4. \`list_repositories\` → 传入 workspaceId，获取 repoId
+5. \`read_file\` / \`write_file\` / \`get_version_history\` → 传入 workspaceId + repoId 操作文件
+
+## 七、MCP 能力边界（重要）
+
+AI Agent 可通过 MCP：
+
+- **创建**工作空间（\`create_workspace\`）与仓库（\`create_repository\`）
+- **列出/发现**已有工作空间与仓库（\`list_workspaces\`、\`list_repositories\`）
+- **读写**仓库内文件（\`read_file\`、\`write_file\`）
+- **查看**版本历史（\`get_version_history\`）
+
+成员管理、分享、回收站、版本回退等请使用 Web UI 或 REST API，不在 MCP 暴露。
 
 配置完成后，请告诉我是否已成功连接并列出工具。`;
   }
@@ -224,8 +265,43 @@ ${toolDocs}
       case 'list_workspaces':
         return this.workspaceService.findAll(userId);
 
+      case 'create_workspace': {
+        this.assertWriteScope(options);
+        const name = typeof args.name === 'string' ? args.name.trim() : '';
+        if (!name) {
+          throw new AppException(
+            ErrorCode.VALIDATION_FAILED,
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+        const description =
+          typeof args.description === 'string' ? args.description : undefined;
+        return this.workspaceService.create(userId, name, description);
+      }
+
       case 'list_repositories':
         return this.repoService.listRepos(args.workspaceId, userId);
+
+      case 'create_repository': {
+        this.assertWriteScope(options);
+        const workspaceId =
+          typeof args.workspaceId === 'string' ? args.workspaceId.trim() : '';
+        const repoName = typeof args.name === 'string' ? args.name.trim() : '';
+        if (!workspaceId || !repoName) {
+          throw new AppException(
+            ErrorCode.VALIDATION_FAILED,
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+        const repoDescription =
+          typeof args.description === 'string' ? args.description : undefined;
+        return this.repoService.createRepo(
+          workspaceId,
+          userId,
+          repoName,
+          repoDescription,
+        );
+      }
 
       case 'read_file':
         await this.workspaceService.checkMembership(args.workspaceId, userId);
@@ -237,12 +313,7 @@ ${toolDocs}
         );
 
       case 'write_file':
-        if (options?.tokenScope === 'READ') {
-          throw new AppException(
-            ErrorCode.TOKEN_WRITE_PERMISSION_REQUIRED,
-            HttpStatus.FORBIDDEN,
-          );
-        }
+        this.assertWriteScope(options);
         await this.workspaceService.checkEditor(args.workspaceId, userId);
         return this.gitService.commitFiles(
           args.workspaceId,
@@ -261,6 +332,15 @@ ${toolDocs}
           ErrorCode.VALIDATION_FAILED,
           HttpStatus.BAD_REQUEST,
         );
+    }
+  }
+
+  private assertWriteScope(options?: McpExecuteOptions) {
+    if (options?.tokenScope === 'READ') {
+      throw new AppException(
+        ErrorCode.TOKEN_WRITE_PERMISSION_REQUIRED,
+        HttpStatus.FORBIDDEN,
+      );
     }
   }
 }

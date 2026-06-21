@@ -9,6 +9,7 @@ const AUDIT_PATHS = [
   '/api/repos',
   '/api/shares',
   '/api/auth/tokens',
+  '/api/mcp',
 ];
 
 @Injectable()
@@ -16,14 +17,26 @@ export class AuditMiddleware implements NestMiddleware {
   private readonly logger = new Logger('Audit');
   constructor(private prisma: PrismaService) {}
 
-  async use(req: Request, res: Response, next: NextFunction) {
-    next();
-
-    // Only audit mutating operations on key paths
-    if (!AUDIT_ACTIONS.includes(req.method)) return;
+  use(req: Request, res: Response, next: NextFunction) {
+    if (!AUDIT_ACTIONS.includes(req.method)) {
+      next();
+      return;
+    }
     const shouldAudit = AUDIT_PATHS.some((p) => req.path.startsWith(p));
-    if (!shouldAudit) return;
+    if (!shouldAudit) {
+      next();
+      return;
+    }
 
+    // Defer until response finishes so guards have populated req.user (JWT / MCP / PAT).
+    res.on('finish', () => {
+      void this.writeAuditLog(req);
+    });
+
+    next();
+  }
+
+  private async writeAuditLog(req: Request) {
     const userId = (req as any).user?.userId || null;
     const ip = req.ip || (req.headers['x-forwarded-for'] as string) || '';
 

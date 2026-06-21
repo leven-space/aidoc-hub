@@ -56,7 +56,7 @@ aidoc-hub/
 | 新页面 | — | `pages/{domain}/XxxPage.tsx` + 在 `App.tsx` 注册路由 |
 | 共享 UI | — | `components/` |
 | 数据库变更 | `backend/prisma/schema.prisma` + `prisma db push` | 同步更新 `frontend/src/types/` |
-| AI/MCP 能力 | `backend/src/mcp/` | 通常无需前端 |
+| AI/MCP 能力 | `backend/src/mcp/`（**创建空间/仓库 + 发现资源 + 文件读写**，见「MCP 能力边界」） | MCP 配置页 |
 | 新功能说明 / 发版记录 | — | `frontend/src/content/` + 双语 i18n + 根目录 `CHANGELOG.md` |
 
 ### 跨层调用规则
@@ -168,6 +168,43 @@ cd backend && pnpm test      # 后端单测（若改了 backend）
 ### v1.0.0 已收录核心功能（`features.ts`）
 
 工作空间、HTML 预览、**审阅模式**（含 review Tour）、版本历史、上传提交、分享、全局搜索、回收站、MCP、Token、审计日志。
+
+## MCP 能力边界（AI 必读）
+
+MCP 层供 AI Agent **创建工作空间与仓库、发现资源并读写仓库内文件**。实现见 `backend/src/mcp/`。
+
+### 已提供的工具（7 个，勿随意增删）
+
+| 工具 | 能力 | 权限要点 |
+|------|------|----------|
+| `list_workspaces` | 列出当前用户可访问的工作空间（含 id、名称等元数据） | 成员身份 |
+| `create_workspace` | 创建新工作空间（调用者为 ADMIN） | PAT 需 **READ_WRITE** |
+| `list_repositories` | 列出指定工作空间下的仓库 | 成员身份 |
+| `create_repository` | 在指定工作空间下创建新仓库 | **ADMIN** 且 PAT 为 **READ_WRITE** |
+| `read_file` | 读取仓库内文件；可选 `version` OID | 成员身份 |
+| `write_file` | 写入单文件并产生新版本 | **EDITOR+** 且 PAT 为 **READ_WRITE** |
+| `get_version_history` | 获取仓库 Git 线性提交历史 | 成员身份 |
+
+典型流程：`create_workspace` → `create_repository` → `write_file` / `read_file`（也可 `list_*` 发现已有资源）。
+
+### 故意不提供（禁止擅自实现 MCP 工具）
+
+| 不提供 | 说明 |
+|--------|------|
+| 成员 / 角色管理 | 走 REST + Web UI |
+| 分享链接、回收站、审计 | 走 REST + Web UI |
+| 版本回退 `restore` | 仅 REST/UI，MCP 不暴露 |
+| 批量上传 / 文件夹提交 | MCP 仅单文件 `write_file` |
+| 删除工作空间或仓库 | MCP 不暴露 |
+
+> 新增 MCP 工具须产品明确需求，并同步：`mcp.server.ts`（`getTools` + `executeTool`）、`mcp-http.service.ts`（SDK 注册）、E2E `frontend/e2e/mcp-api.spec.ts`、README/AGENTS **中英双语文档**。
+
+### 代码同步点
+
+- 工具定义与执行：`backend/src/mcp/mcp.server.ts`
+- HTTP Streamable 注册：`backend/src/mcp/mcp-http.service.ts`
+- 鉴权：`McpAuthGuard` + `tokenScope`（`create_workspace` / `create_repository` / `write_file` 校验 READ_WRITE）
+- 接入说明生成：`McpServer.buildSetupGuide()`（MCP 配置页复制给 AI 的 Prompt）
 
 ## 分层文档
 

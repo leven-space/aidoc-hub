@@ -132,12 +132,41 @@ export class McpHttpService implements OnModuleDestroy {
     );
 
     server.registerTool(
+      'create_workspace',
+      {
+        description:
+          'Create a new workspace (caller becomes ADMIN; PAT requires READ_WRITE)',
+        inputSchema: {
+          name: z.string().describe('Workspace name'),
+          description: z.string().optional().describe('Optional description'),
+        },
+      },
+      async ({ name, description }) =>
+        runTool('create_workspace', { name, description }),
+    );
+
+    server.registerTool(
       'list_repositories',
       {
         description: 'List repositories in a workspace',
         inputSchema: { workspaceId: z.string().describe('Workspace ID') },
       },
       async ({ workspaceId }) => runTool('list_repositories', { workspaceId }),
+    );
+
+    server.registerTool(
+      'create_repository',
+      {
+        description:
+          'Create a repository in a workspace (requires workspace ADMIN; PAT requires READ_WRITE)',
+        inputSchema: {
+          workspaceId: z.string().describe('Workspace ID'),
+          name: z.string().describe('Repository name'),
+          description: z.string().optional().describe('Optional description'),
+        },
+      },
+      async ({ workspaceId, name, description }) =>
+        runTool('create_repository', { workspaceId, name, description }),
     );
 
     server.registerTool(

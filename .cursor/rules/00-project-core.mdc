@@ -21,6 +21,7 @@ alwaysApply: true
 - 共享类型 → `frontend/src/types/index.ts`
 - 数据库 → `backend/prisma/schema.prisma`
 - 发版 / 功能说明 → `frontend/src/content/` + 双语 i18n + `CHANGELOG.md`（见 `AGENTS.md`「版本与文档」）
+- MCP 工具 → 仅 `backend/src/mcp/`（见 `AGENTS.md`「MCP 能力边界」）
 
 ## 禁止
 

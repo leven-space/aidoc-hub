@@ -62,19 +62,80 @@ test.describe('MCP API E2E', () => {
     const { tools } = await mcpTools(request, jwt);
     const names = tools.map((t) => t.name);
     expect(names).toContain('list_workspaces');
+    expect(names).toContain('create_workspace');
     expect(names).toContain('list_repositories');
+    expect(names).toContain('create_repository');
     expect(names).toContain('read_file');
     expect(names).toContain('write_file');
     expect(names).toContain('get_version_history');
-    expect(names.length).toBe(5);
+    expect(names.length).toBe(7);
   });
 
   test('MCP-03 PAT 可获取工具列表', async ({ request }) => {
     const { tools } = await mcpTools(request, readPat);
-    expect(tools.length).toBe(5);
+    expect(tools.length).toBe(7);
   });
 
-  test('MCP-04 list_workspaces 返回用户空间', async ({ request }) => {
+  test('MCP-04 create_workspace 创建工作空间', async ({ request }) => {
+    const wsName = `MCP-Create-${Date.now()}`;
+    const created = await mcpExecute<{ id: string; name: string }>(
+      request,
+      writePat,
+      'create_workspace',
+      { name: wsName, description: 'MCP 创建测试' },
+    );
+    expect(created.id).toBeTruthy();
+    expect(created.name).toBe(wsName);
+
+    const workspaces = await mcpExecute<Array<{ id: string; name: string }>>(
+      request,
+      readPat,
+      'list_workspaces',
+    );
+    expect(workspaces.some((w) => w.id === created.id)).toBe(true);
+  });
+
+  test('MCP-04b READ PAT 禁止 create_workspace', async ({ request }) => {
+    const { status, body } = await apiRaw(request, 'POST', '/mcp/execute', readPat, {
+      tool: 'create_workspace',
+      arguments: { name: 'should-fail' },
+    });
+    expect(status).toBe(403);
+    const err = body as { code?: string };
+    expect(err.code).toBe('TOKEN_WRITE_PERMISSION_REQUIRED');
+  });
+
+  test('MCP-04c create_repository 创建仓库', async ({ request }) => {
+    const repoName = `MCP-Repo-${Date.now()}`;
+    const created = await mcpExecute<{ id: string; name: string }>(
+      request,
+      writePat,
+      'create_repository',
+      { workspaceId, name: repoName, description: 'MCP 仓库测试' },
+    );
+    expect(created.id).toBeTruthy();
+    expect(created.name).toBe(repoName);
+
+    const repos = await mcpExecute<Array<{ id: string; name: string }>>(
+      request,
+      readPat,
+      'list_repositories',
+      { workspaceId },
+    );
+    expect(repos.some((r) => r.id === created.id)).toBe(true);
+  });
+
+  test('MCP-04d READ PAT 禁止 create_repository', async ({ request }) => {
+    const { status, body } = await apiRaw(request, 'POST', '/mcp/execute', readPat, {
+      tool: 'create_repository',
+      arguments: { workspaceId, name: 'should-fail' },
+    });
+    expect(status).toBe(403);
+    const err = body as { code?: string };
+    expect(err.code).toBe('TOKEN_WRITE_PERMISSION_REQUIRED');
+  });
+
+  test('MCP-05 list_workspaces 返回用户空间', async ({ request }) => {
     const workspaces = await mcpExecute<Array<{ id: string; name: string }>>(
       request,
       readPat,
@@ -174,7 +235,7 @@ test.describe('MCP API E2E', () => {
     expect(status).toBe(200);
     const data = (body as { data: { mcpUrl: string; tools: unknown[] } }).data;
     expect(data.mcpUrl).toContain('/api/mcp');
-    expect(data.tools.length).toBe(5);
+    expect(data.tools.length).toBe(7);
   });
 
   test('MCP-13 并行 read_file 全部成功', async ({ request }) => {

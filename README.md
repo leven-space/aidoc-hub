@@ -101,7 +101,7 @@ AI Doc Hub helps teams **manage, version, preview, and share HTML assets** witho
 
 - **Personal Access Tokens (PAT)** — `adh_` tokens with `READ` or `READ_WRITE` scope
 - **MCP server** — HTTP Streamable MCP at `/api/mcp` with tools:
-  - `list_workspaces` · `list_repositories` · `read_file` · `write_file` · `get_version_history`
+  - `list_workspaces` · `create_workspace` · `list_repositories` · `create_repository` · `read_file` · `write_file` · `get_version_history`
 - **Setup snippets** — Copy-paste MCP config for Cursor / Claude Code / Codex
 
 ### Enterprise-oriented
@@ -177,11 +177,11 @@ Connect your AI client to manage documentation in your workspace:
 
 Typical agent workflow:
 
-1. `list_workspaces` → get `workspaceId`
-2. `list_repositories` → get `repoId`
+1. `create_workspace` (optional) → create workspace, or `list_workspaces` → get `workspaceId`
+2. `create_repository` (optional) → create repo, or `list_repositories` → get `repoId`
 3. `read_file` / `write_file` / `get_version_history`
 
-Create tokens under **Settings → Token Management**. `write_file` requires **READ_WRITE** PAT and **Editor** role (or higher).
+Create tokens under **Settings → Token Management**. `create_workspace`, `create_repository`, and `write_file` require **READ_WRITE** PAT. `create_repository` requires **Admin** role; `write_file` requires **Editor** (or higher).
 
 ---
 
