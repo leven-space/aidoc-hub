@@ -165,6 +165,7 @@
     "versionHistory": "Version History",
     "share": "Share",
     "commitNew": "Commit New Version",
+    "reviewMode": "Review Mode",
     "downloadFile": "Download File",
     "downloadFolder": "Download Folder",
     "downloadFailed": "Download failed"
@@ -426,5 +427,33 @@
     "TOKEN_WRITE_PERMISSION_REQUIRED": "Token does not have write permission",
     "VALIDATION_FAILED": "Validation failed",
     "INTERNAL_ERROR": "Internal server error"
+  },
+  "review": {
+    "backToRepo": "Back to repository",
+    "copyPrompt": "Copy AI Prompt",
+    "bannerTitle": "Review mode does not write to the repository",
+    "bannerDesc": "Select elements on the preview and add change notes. Copy the prompt into your AI tool to edit source, then commit a new version or use MCP write_file.",
+    "annotationList": "Change notes",
+    "selectElementHint": "Click an element in the preview to add a change note here",
+    "selectedElement": "Selected element",
+    "notePlaceholder": "Describe the change, e.g. reduce title font size by 20% and increase spacing below the subtitle",
+    "addNote": "Add note",
+    "emptyAnnotations": "No change notes yet",
+    "editNotePrompt": "Edit change note",
+    "noteAdded": "Change note added",
+    "copyEmpty": "Add at least one change note first",
+    "copySuccess": "Prompt copied to clipboard",
+    "copyFailed": "Copy failed — please copy manually",
+    "loadFailed": "Failed to load review page",
+    "missingParams": "Missing file path parameter",
+    "bridgeLoading": "Loading review tools…",
+    "bridgeErrorTitle": "Review tools failed to load",
+    "bridgeErrorDesc": "The in-page element picker script could not load. Ensure the app was built (review-bridge.js), or click retry.",
+    "bridgeRetry": "Retry",
+    "versionNotFound": "The requested version was not found; switched to the latest version",
+    "noteUpdated": "Change note updated",
+    "editNoteTitle": "Edit change note",
+    "altBrowseHint": "Hold Alt and click to interact with links and buttons normally",
+    "iframeTitle": "HTML review preview"
   }
 }

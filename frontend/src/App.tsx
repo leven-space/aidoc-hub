@@ -23,6 +23,7 @@ import { McpConfigPage } from './pages/settings/McpConfigPage';
 import { SystemConfigPage } from './pages/settings/SystemConfigPage';
 import { VersionHistoryPage } from './pages/version/VersionHistoryPage';
 import { SharePage } from './pages/share/SharePage';
+import { ReviewPage } from './pages/review/ReviewPage';
 import './styles/global.css';
 
 function AppRoutes() {
@@ -44,6 +45,7 @@ function AppRoutes() {
             <Route path="/workspaces/:workspaceId" element={<WorkspaceDetail />} />
             <Route path="/workspaces/:workspaceId/repos/:repoId" element={<RepoDetail />} />
             <Route path="/workspaces/:workspaceId/repos/:repoId/upload" element={<UploadPage />} />
+            <Route path="/workspaces/:workspaceId/repos/:repoId/review" element={<ReviewPage />} />
             <Route path="/workspaces/:workspaceId/repos/:repoId/versions" element={<VersionHistoryPage />} />
             <Route path="/recycle" element={<RecyclePage />} />
             <Route path="/settings/tokens" element={<TokenManage />} />

@@ -16,6 +16,7 @@ import {
   DownloadOutlined,
   FileOutlined,
   FolderOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -217,6 +218,24 @@ export function RepoDetail() {
       ]}
       extra={
         <Space>
+          {selectedFile && isHtmlFile(selectedFile) && (
+            <Button
+              icon={<EditOutlined />}
+              onClick={() => {
+                const params = new URLSearchParams({
+                  path: selectedFile,
+                });
+                if (selectedVersion) {
+                  params.set('version', selectedVersion);
+                }
+                navigate(
+                  `/workspaces/${workspaceId}/repos/${repoId}/review?${params.toString()}`,
+                );
+              }}
+            >
+              {t('repo.reviewMode')}
+            </Button>
+          )}
           <Button
             icon={<HistoryOutlined />}
             onClick={() => navigate(`/workspaces/${workspaceId}/repos/${repoId}/versions`)}

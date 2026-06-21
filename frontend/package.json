@@ -4,10 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "pnpm run build:review-bridge && vite",
+    "build:review-bridge": "vite build --config vite.review-bridge.config.ts",
+    "build": "pnpm run build:review-bridge && tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:unit": "node --experimental-strip-types --test src/review/*.test.ts"
   },
   "dependencies": {
     "@ant-design/icons": "^6.2.5",
