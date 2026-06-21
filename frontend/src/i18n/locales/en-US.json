@@ -42,6 +42,9 @@
     "systemConfig": "System Config",
     "audit": "Audit Logs",
     "helpTour": "Getting Started",
+    "help": "Help",
+    "helpFeatures": "Features",
+    "helpChangelog": "Changelog",
     "logout": "Sign Out"
   },
   "auth": {
@@ -376,7 +379,92 @@
     "mcpTitle": "MCP Integration",
     "mcpDesc": "Get auto-generated config and prompts for Cursor / Claude Code / Codex.",
     "helpTitle": "Getting Started",
-    "helpDesc": "Click here anytime to replay the feature tour."
+    "helpDesc": "Access getting started tour, feature guides, and changelog anytime."
+  },
+  "help": {
+    "featuresTitle": "Features",
+    "featuresSubtitle": "Explore AI Doc Hub capabilities; some features include interactive guides",
+    "startGuide": "Start Guide",
+    "noGuide": "No interactive guide",
+    "currentVersion": "v{{version}}",
+    "badgeNew": "New",
+    "categories": {
+      "core": "Core",
+      "collaboration": "Collaboration & Sharing",
+      "ai": "AI & Automation",
+      "admin": "Administration"
+    }
+  },
+  "features": {
+    "workspace": {
+      "title": "Workspaces",
+      "desc": "Organize HTML assets in workspaces with Admin, Editor, and Viewer roles."
+    },
+    "html-preview": {
+      "title": "HTML Preview",
+      "desc": "In-app HTML rendering with version switching and fullscreen mode."
+    },
+    "review": {
+      "title": "Review Mode",
+      "desc": "Click elements on the preview to add change notes and copy a structured AI prompt — without writing to the repo.",
+      "guideHint": "Open an HTML file in a repository, enter Review Mode, then start the guide."
+    },
+    "version-history": {
+      "title": "Version History",
+      "desc": "Linear Git commit timeline with diff comparison and restore (restore creates a new commit)."
+    },
+    "upload": {
+      "title": "Upload & Commit",
+      "desc": "Upload single files or entire folders with a commit message."
+    },
+    "share": {
+      "title": "Share Links",
+      "desc": "Read-only preview or source collaboration links with optional password and expiry."
+    },
+    "search": {
+      "title": "Global Search",
+      "desc": "Search across workspaces and repositories."
+    },
+    "recycle": {
+      "title": "Recycle Bin",
+      "desc": "Soft-deleted workspaces and repos can be restored within the retention period."
+    },
+    "mcp": {
+      "title": "MCP Integration",
+      "desc": "Let Cursor, Claude Code, and other AI tools read/write documents via MCP."
+    },
+    "token": {
+      "title": "Personal Access Token",
+      "desc": "Create adh_-prefixed tokens for API and MCP authentication."
+    },
+    "audit": {
+      "title": "Audit Logs",
+      "desc": "System admins can review audit records of key operations."
+    }
+  },
+  "featureTour": {
+    "review": {
+      "previewTitle": "Select an Element",
+      "previewDesc": "Click any element in the preview to select it. Hold Alt while clicking to follow links and buttons normally.",
+      "annotationsTitle": "Add Change Notes",
+      "annotationsDesc": "After selecting an element, describe the change in the left panel and save. You can add multiple notes.",
+      "copyTitle": "Copy AI Prompt",
+      "copyDesc": "When done, click here to copy a structured prompt to your clipboard for your AI tool."
+    }
+  },
+  "changelog": {
+    "title": "Changelog",
+    "v100": {
+      "title": "1.0.0 — First Stable Release",
+      "items": [
+        "Workspaces & Git versioning: upload, preview, history, and diff",
+        "Review Mode: visual element annotations with one-click AI prompt",
+        "Share links: read-only preview and source collaboration with password & expiry",
+        "MCP integration for Cursor / Claude Code",
+        "Personal Access Tokens, global search, recycle bin, audit logs",
+        "Chinese & English UI with getting started tour"
+      ]
+    }
   },
   "errors": {
     "REPO_NOT_FOUND": "Repository not found",

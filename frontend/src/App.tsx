@@ -24,6 +24,7 @@ import { SystemConfigPage } from './pages/settings/SystemConfigPage';
 import { VersionHistoryPage } from './pages/version/VersionHistoryPage';
 import { SharePage } from './pages/share/SharePage';
 import { ReviewPage } from './pages/review/ReviewPage';
+import { FeaturesPage } from './pages/help/FeaturesPage';
 import './styles/global.css';
 
 function AppRoutes() {
@@ -52,6 +53,7 @@ function AppRoutes() {
             <Route path="/settings/mcp" element={<McpConfigPage />} />
             <Route path="/settings/system" element={<SystemConfigPage />} />
             <Route path="/settings/audit" element={<AuditLogPage />} />
+            <Route path="/help/features" element={<FeaturesPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -15,6 +15,7 @@ import {
   postToBridge,
 } from '../../review/messages';
 import { buildReviewPrompt } from '../../review/prompt-builder';
+import { startFeatureTour } from '../../content/tours';
 import {
   getReviewStorageKey,
   loadReviewAnnotations,
@@ -293,6 +294,7 @@ export function ReviewPage() {
         copyDisabled={annotations.length === 0}
         onBack={handleBack}
         onCopy={handleCopyPrompt}
+        onHelp={() => startFeatureTour('review')}
       />
 
       {!bannerClosed && (
@@ -341,7 +343,10 @@ export function ReviewPage() {
           onDelete={handleDeleteAnnotation}
         />
 
-        <div style={{ flex: 1, position: 'relative', background: '#f5f5f5' }}>
+        <div
+          data-tour="review-preview"
+          style={{ flex: 1, position: 'relative', background: '#f5f5f5' }}
+        >
           {loading && (
             <div
               style={{

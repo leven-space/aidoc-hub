@@ -42,6 +42,9 @@
     "systemConfig": "系统配置",
     "audit": "审计日志",
     "helpTour": "新手引导",
+    "help": "帮助",
+    "helpFeatures": "功能说明",
+    "helpChangelog": "更新日志",
     "logout": "退出登录"
   },
   "auth": {
@@ -376,7 +379,92 @@
     "mcpTitle": "MCP 接入",
     "mcpDesc": "获取自动生成的配置与 Prompt，发给 Cursor / Claude Code / Codex 即可快速接入。",
     "helpTitle": "新手引导",
-    "helpDesc": "随时点击此按钮重新查看功能引导。"
+    "helpDesc": "随时点击此按钮重新查看功能引导、功能说明与更新日志。"
+  },
+  "help": {
+    "featuresTitle": "功能说明",
+    "featuresSubtitle": "了解 AI Doc Hub 核心能力，部分功能支持交互式引导",
+    "startGuide": "开始引导",
+    "noGuide": "暂无交互引导",
+    "currentVersion": "v{{version}}",
+    "badgeNew": "新",
+    "categories": {
+      "core": "核心能力",
+      "collaboration": "协作与分享",
+      "ai": "AI 与自动化",
+      "admin": "管理"
+    }
+  },
+  "features": {
+    "workspace": {
+      "title": "工作空间",
+      "desc": "以工作空间组织 HTML 资产，支持管理员、编辑者、查看者角色与成员管理。"
+    },
+    "html-preview": {
+      "title": "HTML 预览",
+      "desc": "应用内渲染 HTML 预览，支持按版本查看与全屏模式。"
+    },
+    "review": {
+      "title": "审阅模式",
+      "desc": "在 HTML 预览上点击元素添加修改意见，一键生成 AI 修改 Prompt，不直接写入仓库。",
+      "guideHint": "请先在仓库详情页打开 HTML 文件，点击「审阅模式」进入后再使用引导。"
+    },
+    "version-history": {
+      "title": "版本历史",
+      "desc": "查看 Git 线性提交历史，支持版本差异对比与回退（回退以新提交方式保留历史）。"
+    },
+    "upload": {
+      "title": "上传与提交",
+      "desc": "支持单文件或整个文件夹上传，提交时填写版本说明。"
+    },
+    "share": {
+      "title": "分享链接",
+      "desc": "生成只读预览或源码协作分享链接，可设置密码、有效期与访问次数。"
+    },
+    "search": {
+      "title": "全局搜索",
+      "desc": "跨工作空间与仓库快速搜索文件和内容。"
+    },
+    "recycle": {
+      "title": "回收站",
+      "desc": "软删除的工作空间与仓库可在保留期内恢复。"
+    },
+    "mcp": {
+      "title": "MCP 接入",
+      "desc": "通过 MCP 协议让 Cursor、Claude Code 等 AI 工具读写文档内容。"
+    },
+    "token": {
+      "title": "Personal Access Token",
+      "desc": "创建 adh_ 前缀的访问令牌，用于 API 与 MCP 鉴权。"
+    },
+    "audit": {
+      "title": "审计日志",
+      "desc": "系统管理员可查看关键操作的审计记录。"
+    }
+  },
+  "featureTour": {
+    "review": {
+      "previewTitle": "选择页面元素",
+      "previewDesc": "在预览区点击任意元素即可选中。按住 Alt 点击可正常浏览链接与按钮。",
+      "annotationsTitle": "添加修改意见",
+      "annotationsDesc": "选中元素后，在左侧面板填写修改说明并保存，可添加多条意见。",
+      "copyTitle": "复制 AI Prompt",
+      "copyDesc": "完成标注后点击此按钮，将结构化 Prompt 复制到剪贴板，发给 AI 工具修改源码。"
+    }
+  },
+  "changelog": {
+    "title": "更新日志",
+    "v100": {
+      "title": "1.0.0 — 首个正式版本",
+      "items": [
+        "工作空间与 Git 版本管理：HTML 资产上传、预览、版本历史与差异对比",
+        "审阅模式：可视化元素标注，一键生成 AI 修改 Prompt",
+        "分享链接：只读预览与源码协作，支持密码与有效期",
+        "MCP 接入：Cursor / Claude Code 通过 MCP 读写文档",
+        "Personal Access Token、全局搜索、回收站、审计日志",
+        "中英文界面与新手引导"
+      ]
+    }
   },
   "errors": {
     "REPO_NOT_FOUND": "仓库不存在",

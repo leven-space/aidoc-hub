@@ -115,6 +115,7 @@ export function AnnotationList({
 
   return (
     <div
+      data-tour="review-annotations"
       style={{
         width: 320,
         borderRight: '1px solid #f0f0f0',

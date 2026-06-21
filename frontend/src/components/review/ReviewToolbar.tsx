@@ -1,5 +1,5 @@
 import { Button, Space, Typography } from 'antd';
-import { ArrowLeftOutlined, CopyOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, CopyOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
 interface ReviewToolbarProps {
@@ -9,6 +9,7 @@ interface ReviewToolbarProps {
   copyDisabled: boolean;
   onBack: () => void;
   onCopy: () => void;
+  onHelp?: () => void;
 }
 
 export function ReviewToolbar({
@@ -18,6 +19,7 @@ export function ReviewToolbar({
   copyDisabled,
   onBack,
   onCopy,
+  onHelp,
 }: ReviewToolbarProps) {
   const { t } = useTranslation();
 
@@ -41,14 +43,22 @@ export function ReviewToolbar({
         </Button>
         <Typography.Text type="secondary">{meta}</Typography.Text>
       </Space>
-      <Button
-        type="primary"
-        icon={<CopyOutlined />}
-        disabled={copyDisabled}
-        onClick={onCopy}
-      >
-        {t('review.copyPrompt')}
-      </Button>
+      <Space>
+        {onHelp && (
+          <Button type="text" icon={<QuestionCircleOutlined />} onClick={onHelp}>
+            {t('help.startGuide')}
+          </Button>
+        )}
+        <Button
+          type="primary"
+          icon={<CopyOutlined />}
+          disabled={copyDisabled}
+          onClick={onCopy}
+          data-tour="review-copy"
+        >
+          {t('review.copyPrompt')}
+        </Button>
+      </Space>
     </div>
   );
 }

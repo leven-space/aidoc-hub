@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Space, Button } from 'antd';
+import { Layout, Menu, Avatar, Dropdown, Space, Button, Typography } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   HomeOutlined,
@@ -14,6 +14,9 @@ import {
   ToolOutlined,
   KeyOutlined,
   AuditOutlined,
+  BookOutlined,
+  HistoryOutlined,
+  CompassOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -21,12 +24,16 @@ import { useAuth } from '../contexts/AuthContext';
 import { GlobalSearch } from '../components/GlobalSearch';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { OnboardingTourHost } from '../components/OnboardingTour';
+import { ChangelogDrawer } from '../components/ChangelogDrawer';
 import { AppLogo } from '../components/AppLogo';
+import { startFeatureTour } from '../content/tours';
+import { APP_VERSION } from '../content/version';
 
 const { Header, Sider, Content } = Layout;
 
 export function MainLayout() {
   const [collapsed, setCollapsed] = useState(false);
+  const [changelogOpen, setChangelogOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
@@ -34,9 +41,26 @@ export function MainLayout() {
 
   const isSystemAdmin = user?.systemRole === 'SYSTEM_ADMIN';
 
-  const startTour = () => {
-    window.dispatchEvent(new CustomEvent('aidoc-hub:start-tour'));
-  };
+  const helpMenuItems: MenuProps['items'] = [
+    {
+      key: 'tour',
+      icon: <CompassOutlined />,
+      label: t('nav.helpTour'),
+      onClick: () => startFeatureTour('onboarding'),
+    },
+    {
+      key: 'features',
+      icon: <BookOutlined />,
+      label: t('nav.helpFeatures'),
+      onClick: () => navigate('/help/features'),
+    },
+    {
+      key: 'changelog',
+      icon: <HistoryOutlined />,
+      label: t('nav.helpChangelog'),
+      onClick: () => setChangelogOpen(true),
+    },
+  ];
 
   const settingsChildren: MenuProps['items'] = [
     {
@@ -179,14 +203,18 @@ export function MainLayout() {
             </div>
           </Space>
           <Space size={16}>
-            <Button
-              type="text"
-              icon={<QuestionCircleOutlined />}
-              data-tour="help-button"
-              onClick={startTour}
-            >
-              {t('nav.helpTour')}
-            </Button>
+            <Dropdown menu={{ items: helpMenuItems }} placement="bottomRight">
+              <Button
+                type="text"
+                icon={<QuestionCircleOutlined />}
+                data-tour="help-button"
+              >
+                {t('nav.help')}
+                <Typography.Text type="secondary" style={{ fontSize: 12, marginLeft: 4 }}>
+                  v{APP_VERSION}
+                </Typography.Text>
+              </Button>
+            </Dropdown>
             <LanguageSwitcher />
             <Dropdown
               menu={{
@@ -215,6 +243,7 @@ export function MainLayout() {
         </Content>
       </Layout>
       <OnboardingTourHost />
+      <ChangelogDrawer open={changelogOpen} onClose={() => setChangelogOpen(false)} />
     </Layout>
   );
 }
